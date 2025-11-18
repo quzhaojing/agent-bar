@@ -248,21 +248,12 @@ export default function ToolbarListPage() {
                   marginBottom: '12px'
                 }}>
                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px', fontWeight: '500' }}>Website Patterns:</div>
-                  <div style={{ fontSize: '13px', color: '#374151', fontFamily: 'monospace', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '13px', color: '#374151', fontFamily: 'monospace' }}>
                     {toolbar.websitePatterns
                       ? toolbar.websitePatterns.map((wp: WebsitePattern) => wp.pattern).join(', ')
                       : (toolbar as any).urlRule || '*'
                     }
                   </div>
-
-                  {toolbar.context && (
-                    <div>
-                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px', fontWeight: '500' }}>Context:</div>
-                      <div style={{ fontSize: '13px', color: '#374151', fontStyle: 'italic', opacity: 0.8 }}>
-                        {toolbar.context.length > 100 ? toolbar.context.substring(0, 100) + '...' : toolbar.context}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
