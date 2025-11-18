@@ -1,0 +1,57 @@
+{
+  "name": "商务办公",
+  "description": "适用于商务和办公场景的工具按钮",
+  "category": "business",
+  "buttons": [
+    {
+      "id": "write-email",
+      "name": "撰写邮件",
+      "icon": "📧",
+      "promptTemplate": "请基于以下要点撰写一封专业的商务邮件：{{selectedText}}",
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "id": "create-summary",
+      "name": "创建摘要",
+      "icon": "📊",
+      "promptTemplate": "请将以下内容创建成一份简洁的商务摘要：{{selectedText}}",
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "id": "generate-report",
+      "name": "生成报告",
+      "icon": "📈",
+      "promptTemplate": "请将以下数据和信息整理成一份结构化的报告：{{selectedText}}",
+      "order": 3,
+      "enabled": true
+    },
+    {
+      "id": "brainstorm-ideas",
+      "name": "头脑风暴",
+      "icon": "🚀",
+      "promptTemplate": "请基于以下主题进行头脑风暴，提供创新的想法和建议：{{selectedText}}",
+      "order": 4,
+      "enabled": true
+    },
+    {
+      "id": "swot-analysis",
+      "name": "SWOT分析",
+      "icon": "🔍",
+      "promptTemplate": "请对以下内容进行SWOT分析（优势、劣势、机会、威胁）：{{selectedText}}",
+      "order": 5,
+      "enabled": true
+    },
+    {
+      "id": "create-proposal",
+      "name": "创建提案",
+      "icon": "📝",
+      "promptTemplate": "请基于以下信息创建一份商务提案：{{selectedText}}",
+      "order": 6,
+      "enabled": true
+    }
+  ],
+  "urlRules": ["linkedin.com", "slack.com", "microsoft.com", "google.com", "notion.so"],
+  "tags": ["business", "office", "professional", "corporate", "work"]
+}

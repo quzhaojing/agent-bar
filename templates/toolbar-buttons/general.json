@@ -1,0 +1,49 @@
+{
+  "name": "通用文本处理",
+  "description": "适用于日常文本处理的基本工具按钮",
+  "category": "general",
+  "buttons": [
+    {
+      "id": "explain",
+      "name": "解释",
+      "icon": "🤔",
+      "promptTemplate": "请用简单易懂的语言解释以下内容：{{selectedText}}",
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "id": "summarize",
+      "name": "总结",
+      "icon": "📝",
+      "promptTemplate": "请将以下内容总结为要点：{{selectedText}}",
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "id": "translate",
+      "name": "翻译",
+      "icon": "🌐",
+      "promptTemplate": "请将以下内容翻译成中文：{{selectedText}}",
+      "order": 3,
+      "enabled": true
+    },
+    {
+      "id": "simplify",
+      "name": "简化",
+      "icon": "✨",
+      "promptTemplate": "请将以下内容简化，使其更容易理解：{{selectedText}}",
+      "order": 4,
+      "enabled": true
+    },
+    {
+      "id": "expand",
+      "name": "扩展",
+      "icon": "📖",
+      "promptTemplate": "请对以下内容进行详细的扩展和说明：{{selectedText}}",
+      "order": 5,
+      "enabled": true
+    }
+  ],
+  "urlRules": ["*"],
+  "tags": ["text", "general", "daily"]
+}

@@ -1,0 +1,51 @@
+import fs from 'fs';
+import path from 'path';
+
+// Create a simple PNG icon data (base64 encoded)
+const createPngIcon = (size) => {
+  // This is a very simple 1x1 pixel PNG with transparency
+  // For a real project, you'd want proper icons
+  const pngData = Buffer.from([
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+    0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+    0x00, 0x00, 0x00, size, 0x00, 0x00, 0x00, size,
+    0x08, 0x06, 0x00, 0x00, 0x00, 0x5C, 0x72, 0xA8,
+    0x66, 0x00, 0x00, 0x00, 0x01, 0x73, 0x52, 0x47,
+    0x42, 0x00, 0xAE, 0xCE, 0x1C, 0xE9, 0x00, 0x00,
+    0x00, 0x0C, 0x49, 0x44, 0x41, 0x54, 0x08, 0x57,
+    0x63, 0xF8, 0x0F, 0x00, 0x00, 0x01, 0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E,
+    0x44, 0xAE, 0x42, 0x60, 0x82
+  ]);
+
+  return pngData;
+};
+
+// Create icons directory
+const assetsDir = path.join(process.cwd(), 'assets');
+if (!fs.existsSync(assetsDir)) {
+  fs.mkdirSync(assetsDir);
+}
+
+// Generate different sized icons
+const sizes = [16, 32, 48, 128];
+sizes.forEach(size => {
+  const iconData = createPngIcon(size);
+  const filename = `icon${size}.png`;
+  const filepath = path.join(assetsDir, filename);
+
+  // Update IHDR chunk with correct size
+  const sizeBuffer = Buffer.alloc(8);
+  sizeBuffer.writeUInt32BE(size, 4);
+  sizeBuffer.writeUInt32BE(size, 8);
+
+  // Copy PNG data and modify size
+  const pngData = Buffer.from(iconData);
+  sizeBuffer.copy(pngData, 8);
+
+  fs.writeFileSync(filepath, pngData);
+  console.log(`Created ${filename}`);
+});
+
+console.log('Icons generated successfully!');

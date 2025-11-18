@@ -1,0 +1,65 @@
+{
+  "name": "编程开发",
+  "description": "适用于程序员和代码开发的工具按钮",
+  "category": "development",
+  "buttons": [
+    {
+      "id": "explain-code",
+      "name": "解释代码",
+      "icon": "💻",
+      "promptTemplate": "请解释以下代码的功能和工作原理：{{selectedText}}",
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "id": "optimize-code",
+      "name": "优化代码",
+      "icon": "⚡",
+      "promptTemplate": "请优化以下代码，提高性能和可读性：{{selectedText}}",
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "id": "debug-code",
+      "name": "调试代码",
+      "icon": "🐛",
+      "promptTemplate": "请分析以下代码中可能存在的错误和问题：{{selectedText}}",
+      "order": 3,
+      "enabled": true
+    },
+    {
+      "id": "refactor-code",
+      "name": "重构代码",
+      "icon": "🔄",
+      "promptTemplate": "请重构以下代码，使其更加模块化和可维护：{{selectedText}}",
+      "order": 4,
+      "enabled": true
+    },
+    {
+      "id": "add-comments",
+      "name": "添加注释",
+      "icon": "💬",
+      "promptTemplate": "请为以下代码添加详细的注释和文档：{{selectedText}}",
+      "order": 5,
+      "enabled": true
+    },
+    {
+      "id": "convert-language",
+      "name": "转换语言",
+      "icon": "🔀",
+      "promptTemplate": "请将以下代码转换成Python语言：{{selectedText}}",
+      "order": 6,
+      "enabled": true
+    },
+    {
+      "id": "generate-tests",
+      "name": "生成测试",
+      "icon": "🧪",
+      "promptTemplate": "请为以下代码生成单元测试：{{selectedText}}",
+      "order": 7,
+      "enabled": true
+    }
+  ],
+  "urlRules": ["github.com", "stackoverflow.com", "gitlab.com", "bitbucket.org"],
+  "tags": ["code", "development", "programming", "debug"]
+}

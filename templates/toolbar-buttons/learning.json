@@ -1,0 +1,57 @@
+{
+  "name": "学习研究",
+  "description": "适用于学习和学术研究的工具按钮",
+  "category": "education",
+  "buttons": [
+    {
+      "id": "explain-concept",
+      "name": "解释概念",
+      "icon": "🧠",
+      "promptTemplate": "请详细解释以下概念，包括定义、原理和应用：{{selectedText}}",
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "id": "find-examples",
+      "name": "举例说明",
+      "icon": "💡",
+      "promptTemplate": "请为以下概念提供具体的例子和应用场景：{{selectedText}}",
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "id": "create-outline",
+      "name": "创建大纲",
+      "icon": "📋",
+      "promptTemplate": "请基于以下内容创建一个详细的学习大纲：{{selectedText}}",
+      "order": 3,
+      "enabled": true
+    },
+    {
+      "id": "generate-quiz",
+      "name": "生成测验",
+      "icon": "❓",
+      "promptTemplate": "请基于以下内容生成一些练习题和测验：{{selectedText}}",
+      "order": 4,
+      "enabled": true
+    },
+    {
+      "id": "compare-concepts",
+      "name": "概念对比",
+      "icon": "⚖️",
+      "promptTemplate": "请分析以下概念的相同点和不同点：{{selectedText}}",
+      "order": 5,
+      "enabled": true
+    },
+    {
+      "id": "historical-context",
+      "name": "历史背景",
+      "icon": "📜",
+      "promptTemplate": "请提供以下概念的历史背景和发展过程：{{selectedText}}",
+      "order": 6,
+      "enabled": true
+    }
+  ],
+  "urlRules": ["wikipedia.org", "coursera.org", "edx.org", "khanacademy.org", "youtube.com"],
+  "tags": ["learning", "education", "study", "research", "academic"]
+}

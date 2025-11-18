@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(node scripts/generate-icons.js:*)",
+      "Bash(pnpm dev)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(pnpm run build:chrome:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

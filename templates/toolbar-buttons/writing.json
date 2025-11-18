@@ -1,0 +1,57 @@
+{
+  "name": "写作助手",
+  "description": "适用于写作和内容创作的工具按钮",
+  "category": "writing",
+  "buttons": [
+    {
+      "id": "improve-writing",
+      "name": "改进写作",
+      "icon": "✍️",
+      "promptTemplate": "请改进以下文本的语法、词汇和表达，使其更加专业和流畅：{{selectedText}}",
+      "order": 1,
+      "enabled": true
+    },
+    {
+      "id": "check-grammar",
+      "name": "检查语法",
+      "icon": "📝",
+      "promptTemplate": "请检查以下文本的语法错误并提供修改建议：{{selectedText}}",
+      "order": 2,
+      "enabled": true
+    },
+    {
+      "id": "change-tone",
+      "name": "改变语气",
+      "icon": "🎭",
+      "promptTemplate": "请将以下文本的语气改为更加正式和专业：{{selectedText}}",
+      "order": 3,
+      "enabled": true
+    },
+    {
+      "id": "make-concise",
+      "name": "精简文本",
+      "icon": "🎯",
+      "promptTemplate": "请将以下文本精简，保留核心信息，去除冗余内容：{{selectedText}}",
+      "order": 4,
+      "enabled": true
+    },
+    {
+      "id": "expand-content",
+      "name": "扩展内容",
+      "icon": "📚",
+      "promptTemplate": "请对以下内容进行详细扩展，增加更多细节和例子：{{selectedText}}",
+      "order": 5,
+      "enabled": true
+    },
+    {
+      "id": "rewrite-style",
+      "name": "重写风格",
+      "icon": "🎨",
+      "promptTemplate": "请用更加生动和有趣的方式重新表达以下内容：{{selectedText}}",
+      "order": 6,
+      "enabled": true
+    }
+  ],
+  "urlRules": ["notion.so", "docs.google.com", "medium.com", "wordpress.org", "substack.com"],
+  "tags": ["writing", "content", "creative", "grammar"]
+}
