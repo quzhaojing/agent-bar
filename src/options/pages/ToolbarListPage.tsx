@@ -231,83 +231,38 @@ export default function ToolbarListPage() {
               </div>
 
               <div style={{ paddingRight: '100px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '8px',
-                    backgroundColor: '#3b82f6',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: '12px',
-                    fontSize: '20px'
-                  }}>
-                    📋
-                  </div>
-                  <h3 style={{
-                    margin: 0,
-                    color: toolbar.enabled ? '#111827' : '#9ca3af',
-                    fontSize: '18px',
-                    fontWeight: '600'
-                  }}>
-                    {toolbar.name}
-                  </h3>
-                </div>
+                <h3 style={{
+                  margin: '0 0 16px 0',
+                  color: toolbar.enabled ? '#111827' : '#9ca3af',
+                  fontSize: '18px',
+                  fontWeight: '600'
+                }}>
+                  {toolbar.name}
+                </h3>
 
                 <div style={{
-                  padding: '8px 12px',
+                  padding: '12px 16px',
                   backgroundColor: '#fff',
                   borderRadius: '6px',
                   border: '1px solid #e5e7eb',
                   marginBottom: '12px'
                 }}>
-                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Website Patterns:</div>
-                  <div style={{ fontSize: '13px', color: '#374151', fontFamily: 'monospace' }}>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '6px', fontWeight: '500' }}>Website Patterns:</div>
+                  <div style={{ fontSize: '13px', color: '#374151', fontFamily: 'monospace', marginBottom: '8px' }}>
                     {toolbar.websitePatterns
                       ? toolbar.websitePatterns.map((wp: WebsitePattern) => wp.pattern).join(', ')
                       : (toolbar as any).urlRule || '*'
                     }
                   </div>
-                </div>
 
-                <div style={{
-                  padding: '8px 12px',
-                  backgroundColor: '#fff',
-                  borderRadius: '6px',
-                  border: '1px solid #e5e7eb'
-                }}>
-                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Buttons:</div>
-                  <div style={{ fontSize: '13px', color: '#374151' }}>
-                    {toolbar.buttons.length} {toolbar.buttons.length === 1 ? 'button' : 'buttons'} configured
-                  </div>
-                  <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                    {toolbar.buttons.slice(0, 3).map((button, index) => (
-                      <span
-                        key={button.id}
-                        style={{
-                          fontSize: '11px',
-                          padding: '2px 6px',
-                          backgroundColor: '#e5e7eb',
-                          borderRadius: '3px',
-                          color: '#6b7280'
-                        }}
-                      >
-                        {button.title}
-                      </span>
-                    ))}
-                    {toolbar.buttons.length > 3 && (
-                      <span style={{
-                        fontSize: '11px',
-                        padding: '2px 6px',
-                        backgroundColor: '#e5e7eb',
-                        borderRadius: '3px',
-                        color: '#6b7280'
-                      }}>
-                        +{toolbar.buttons.length - 3}
-                      </span>
-                    )}
-                  </div>
+                  {toolbar.context && (
+                    <div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px', fontWeight: '500' }}>Context:</div>
+                      <div style={{ fontSize: '13px', color: '#374151', fontStyle: 'italic', opacity: 0.8 }}>
+                        {toolbar.context.length > 100 ? toolbar.context.substring(0, 100) + '...' : toolbar.context}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
