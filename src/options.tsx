@@ -36,21 +36,16 @@ function OptionsPage() {
         display: 'flex',
         alignItems: 'center'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            backgroundColor: '#3b82f6',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '16px',
-            color: 'white',
-            fontWeight: 'bold'
-          }}>
-            AB
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img
+            src="assets/icon48.png"
+            alt="Agent Bar"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '6px'
+            }}
+          />
           <h1 style={{ margin: 0, fontSize: '20px', color: '#1e293b', fontWeight: '600' }}>
             Agent Bar
           </h1>
