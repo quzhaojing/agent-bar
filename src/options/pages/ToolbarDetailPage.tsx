@@ -236,9 +236,6 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
           >
             ← Back to Toolbars
           </button>
-          <h1 style={{ margin: 0, display: 'inline-block', color: '#111827' }}>
-            {toolbars.find(t => t.id === toolbarId) ? 'Edit Toolbar' : 'Create New Toolbar'}
-          </h1>
         </div>
         {message && (
           <div style={{
