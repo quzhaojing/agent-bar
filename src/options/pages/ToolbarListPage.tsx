@@ -113,25 +113,151 @@ export default function ToolbarListPage() {
     }
   };
 
+  const exportToolbars = async () => {
+    try {
+      const result = await chrome.storage.local.get(['agent-bar-config']);
+      const config = result['agent-bar-config'];
+
+      if (!config || !config.toolbarButtons) {
+        alert('No toolbars to export');
+        return;
+      }
+
+      const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        toolbars: config.toolbarButtons
+      };
+
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `agent-bar-toolbars-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting toolbars:', error);
+      alert('Error exporting toolbars');
+    }
+  };
+
+  const importToolbars = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const importData = JSON.parse(text);
+
+      if (!importData.toolbars || !Array.isArray(importData.toolbars)) {
+        alert('Invalid file format. Expected JSON file with toolbars array.');
+        return;
+      }
+
+      const importedToolbars = importData.toolbars.map((toolbar: any) => {
+        let websitePatterns = toolbar.websitePatterns;
+
+        if (toolbar.urlRule && !websitePatterns) {
+          websitePatterns = [{ pattern: toolbar.urlRule, enabled: true }];
+        } else if (websitePatterns && Array.isArray(websitePatterns)) {
+          if (websitePatterns.length > 0 && typeof websitePatterns[0] === 'string') {
+            websitePatterns = websitePatterns.map((pattern: string) => ({ pattern, enabled: true }));
+          }
+        } else {
+          websitePatterns = [{ pattern: '*', enabled: true }];
+        }
+
+        return {
+          ...toolbar,
+          id: `toolbar-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          websitePatterns
+        };
+      });
+
+      const result = await chrome.storage.local.get(['agent-bar-config']);
+      const config = result['agent-bar-config'] || { llmProviders: [], toolbarButtons: [] };
+
+      const existingToolbars = config.toolbarButtons || [];
+      const updatedToolbars = [...existingToolbars, ...importedToolbars];
+
+      setToolbars(updatedToolbars);
+      await saveData({ llmProviders: config.llmProviders || [], toolbarButtons: updatedToolbars });
+
+      alert(`Successfully imported ${importedToolbars.length} toolbar(s)`);
+    } catch (error) {
+      console.error('Error importing toolbars:', error);
+      alert('Error importing toolbars. Please check the file format.');
+    }
+
+    event.target.value = '';
+  };
+
   return (
     <div style={{ padding: '20px', backgroundColor: '#fff', color: '#333' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1 style={{ margin: 0, color: '#111827' }}>Toolbars</h1>
-        <button
-          onClick={createNewToolbar}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          + Create New Toolbar
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={exportToolbars}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+            title="Export all toolbars to JSON file"
+          >
+            📤 Export
+          </button>
+          <label
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#f59e0b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+            title="Import toolbars from JSON file"
+          >
+            📥 Import
+            <input
+              type="file"
+              accept=".json"
+              onChange={importToolbars}
+              style={{ display: 'none' }}
+            />
+          </label>
+          <button
+            onClick={createNewToolbar}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}
+          >
+            + Create New Toolbar
+          </button>
+        </div>
       </div>
 
       {toolbars.length === 0 ? (

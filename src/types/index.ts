@@ -25,8 +25,8 @@ export interface UrlRule {
   updatedAt: number;
 }
 
-// Toolbar Button Types
-export interface ToolbarButton {
+// Legacy Toolbar Button Types (for backward compatibility)
+export interface LegacyToolbarButton {
   id: string;
   name: string;
   icon?: string;
@@ -39,11 +39,79 @@ export interface ToolbarButton {
   updatedAt: number;
 }
 
+// New Toolbar Button Types (based on the JSON structure)
+export interface ToolbarButtonConfig {
+  enabled: boolean;
+  id: string;
+  prompt: string;
+  title: string;
+}
+
+// Website Pattern interface for toolbar URL matching
+export interface WebsitePattern {
+  pattern: string;
+  enabled: boolean;
+}
+
+// Complete toolbar configuration (new structure)
+export interface ToolbarConfig {
+  buttons: ToolbarButtonConfig[];
+  context: string;
+  enabled: boolean;
+  id: string;
+  name: string;
+  websitePatterns: WebsitePattern[];
+}
+
+// Export/Import data structure
+export interface ToolbarExportData {
+  version: string;
+  exportDate: string;
+  toolbars: ToolbarConfig[];
+}
+
+// Template structure (internal use for initialization)
+export interface TemplateConfig {
+  name: string;
+  description: string;
+  category: string;
+  buttons: TemplateButton[];
+  urlRules: string[];
+  tags: string[];
+}
+
+// Template button structure
+export interface TemplateButton {
+  id: string;
+  name: string;
+  icon: string;
+  promptTemplate: string;
+  order: number;
+  enabled: boolean;
+}
+
+// Union type for backward compatibility
+export type ToolbarButton = LegacyToolbarButton | ToolbarButtonConfig;
+
 // Configuration Types
 export interface AgentBarConfig {
   llmProviders: LLMProvider[];
+  urlRules?: UrlRule[]; // Optional for backward compatibility
+  toolbarButtons: ToolbarConfig[]; // New structure
+  settings: {
+    theme: 'light' | 'dark';
+    autoHide: boolean;
+    showOnSelect: boolean;
+    debounceDelay: number;
+    maxHistory: number;
+  };
+}
+
+// Legacy configuration for backward compatibility
+export interface LegacyAgentBarConfig {
+  llmProviders: LLMProvider[];
   urlRules: UrlRule[];
-  toolbarButtons: ToolbarButton[];
+  toolbarButtons: LegacyToolbarButton[];
   settings: {
     theme: 'light' | 'dark';
     autoHide: boolean;

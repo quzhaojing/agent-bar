@@ -42,7 +42,8 @@
     {
       "resources": [
         "assets/*",
-        "icons/*"
+        "icons/*",
+        "templates/*"
       ],
       "matches": [
         "<all_urls>"
