@@ -217,7 +217,14 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
   }
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#fff', color: '#333' }}>
+    <div style={{
+        padding: '20px',
+        backgroundColor: '#fff',
+        color: '#333',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden'
+      }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <div>
@@ -252,7 +259,14 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
       </div>
 
       {/* Form */}
-      <div style={{ padding: '24px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+      <div style={{
+        padding: '24px',
+        backgroundColor: '#f9fafb',
+        borderRadius: '8px',
+        border: '1px solid #e5e7eb',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
+      }}>
         {/* Toolbar Name */}
         <div style={{ marginBottom: '24px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' }}>Toolbar Name</label>
@@ -264,6 +278,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
             placeholder="Enter toolbar name"
             style={{
               width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
               padding: '12px 16px',
               border: '1px solid #d1d5db',
               borderRadius: '8px',
@@ -354,6 +370,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
             rows={3}
             style={{
               width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
               padding: '12px 16px',
               border: '1px solid #d1d5db',
               borderRadius: '8px',
@@ -482,6 +500,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                 rows={3}
                 style={{
                   width: '100%',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
                   padding: '10px 14px',
                   border: '1px solid #d1d5db',
                   borderRadius: '6px',
