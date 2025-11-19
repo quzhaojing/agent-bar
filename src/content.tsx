@@ -450,7 +450,10 @@ const AgentBarApp: React.FC = () => {
         ref={containerRef}
         className="agent-bar-toolbar"
         onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
         style={{
           position: 'absolute',
           left: `${position.x}px`,
@@ -459,54 +462,53 @@ const AgentBarApp: React.FC = () => {
           pointerEvents: isVisible ? 'auto' : 'none',
         }}
       >
-        <div className={`toolbar-container ${position.visible
-            ? position.direction === 'up' ? 'visible-up' : 'visible-down'
-            : 'hidden'
+          <div className={`toolbar-container ${position.visible
+          ? position.direction === 'up' ? 'visible-up' : 'visible-down'
+          : 'hidden'
           }`}>
-          <div className="toolbar-buttons">
-            {displayButtons.map((button, index) => {
-              console.log(`🔘 Rendering button ${index}:`, button);
-              return (
-                <button
-                  key={`${'toolbarId' in button ? button.toolbarId : 'legacy'}-${button.id}`}
-                  className="toolbar-button"
-                  onClick={() => handleButtonClick(button)}
-                  disabled={loading}
-                  title={'toolbarName' in button ? `${button.toolbarName}: ${button.title}` : button.name}
-                  style={{
-                    animationDelay: `${index * 50}ms`,
-                  }}
-                >
-                  {'icon' in button && button.icon && (
-                    <span className="button-icon">{button.icon}</span>
-                  )}
-                  <span className="button-text">{'title' in button ? button.title : button.name}</span>
-                </button>
-              );
-            })}
+            <div className="toolbar-buttons">
+              {displayButtons.map((button, index) => {
+                console.log(`🔘 Rendering button ${index}:`, button);
+                return (
+                  <button
+                    key={`${'toolbarId' in button ? button.toolbarId : 'legacy'}-${button.id}`}
+                    className="toolbar-button"
+                    onClick={() => handleButtonClick(button)}
+                    disabled={loading}
+                    title={'toolbarName' in button ? `${button.toolbarName}: ${button.title}` : button.name}
+                    style={{
+                      animationDelay: `${index * 50}ms`,
+                    }}
+                  >
+                    {'icon' in button && button.icon && (
+                      <span className="button-icon">{button.icon}</span>
+                    )}
+                    <span className="button-text">{'title' in button ? button.title : button.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {position.direction === 'up' && (
+              <div className="toolbar-arrow toolbar-arrow-up" />
+            )}
+            {position.direction === 'down' && (
+              <div className="toolbar-arrow toolbar-arrow-down" />
+            )}
+            {resultPanelVisible && (
+              <ResultPanel
+                visible={resultPanelVisible}
+                content={resultPanelContent}
+                loading={loading}
+                position={resultPanelPosition}
+                onClose={handleResultPanelClose}
+                onCopy={handleResultPanelCopy}
+                onRetry={handleResultPanelRetry}
+              />
+            )}
           </div>
-          {position.direction === 'up' && (
-            <div className="toolbar-arrow toolbar-arrow-up" />
-          )}
-          {position.direction === 'down' && (
-            <div className="toolbar-arrow toolbar-arrow-down" />
-          )}
         </div>
-        {/* Result Panel */}
-        {resultPanelVisible && (
-          <ResultPanel
-            visible={resultPanelVisible}
-            content={resultPanelContent}
-            loading={loading}
-            position={resultPanelPosition}
-            onClose={handleResultPanelClose}
-            onCopy={handleResultPanelCopy}
-            onRetry={handleResultPanelRetry}
-          />
-        )}
-      </div>
-    </>
-  );
+      </>
+    );
 };
 
 // Create container and render the app

@@ -5,6 +5,7 @@
   line-height: 1.5;
   color: #333;
   pointer-events: auto;
+  min-width: 300px;
 }
 
 .toolbar-container {
@@ -362,10 +363,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   animation: fadeIn 0.2s ease-in-out;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(225, 229, 233, 0.8);
+  width: 100%;
 }
 
 .result-panel-content {
@@ -403,7 +401,7 @@
   justify-content: flex-end;
   gap: 4px;
   padding: 8px 12px;
-  background: rgba(249, 250, 251, 0.8);
+  background: #f9fafb;
   border-top: 1px solid #e5e7eb;
 }
 
@@ -452,8 +450,8 @@
 @media (prefers-color-scheme: dark) {
   .agent-bar-result-panel {
     color: #e5e7eb;
-    background: rgba(31, 41, 55, 0.95);
-    border-color: rgba(55, 65, 81, 0.8);
+    background: #1f2937;
+    border-color: #374151;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
@@ -471,7 +469,7 @@
   }
 
   .result-panel-actions {
-    background: rgba(31, 41, 55, 0.8);
+    background: #1f2937;
     border-top-color: #4b5563;
   }
 

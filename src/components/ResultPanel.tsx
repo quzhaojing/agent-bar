@@ -32,6 +32,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
 
   // Prevent clicks inside the panel from bubbling up to document
   const handlePanelClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
   };
 
@@ -53,18 +54,22 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
     onRetry();
   };
 
+  const panelStyle: React.CSSProperties = {
+    borderTop: '1px solid #e1e5e9',
+    marginTop: '0',
+    boxShadow: 'none',
+    borderLeft: 'none',
+    borderRight: 'none',
+    borderBottom: 'none',
+    borderRadius: '0 0 8px 8px',
+  };
+
   return (
     <div
       className="agent-bar-result-panel"
       onClick={handlePanelClick}
       onMouseDown={handlePanelClick}
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        zIndex: 9999,
-        minWidth: '300px',
-        maxWidth: '500px',
-      }}
+      style={panelStyle}
     >
       <div className="result-panel-content">
         {loading ? (
@@ -82,6 +87,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
       <div className="result-panel-actions">
         <button
           className="action-button copy-button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={handleCopyClick}
           title="Copy to clipboard"
         >
@@ -89,6 +95,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
         </button>
         <button
           className="action-button retry-button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={handleRetryClick}
           title="Retry"
         >
@@ -96,6 +103,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
         </button>
         <button
           className="action-button close-button"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={handleClose}
           title="Close"
         >
