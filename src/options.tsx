@@ -3,6 +3,7 @@ import { useRouter } from './options/router';
 import LLMProviderPage from './options/pages/LLMProviderPage';
 import ToolbarListPage from './options/pages/ToolbarListPage';
 import ToolbarDetailPage from './options/pages/ToolbarDetailPage';
+import icon48 from 'assets/icon48.png';
 
 // Register routes
 import { router } from './options/router';
@@ -38,7 +39,7 @@ function OptionsPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <img
-            src="assets/icon48.png"
+            src={icon48}
             alt="Agent Bar"
             style={{
               width: '32px',
