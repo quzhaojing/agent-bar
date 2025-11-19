@@ -286,13 +286,14 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                   placeholder="* or *.github.com"
                   style={{
                     flex: 1,
+                    minWidth: 0,
                     padding: '12px 16px',
                     border: '1px solid #d1d5db',
                     borderRadius: '8px',
                     fontSize: '14px'
                   }}
                 />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <label style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
                     <input
                       type="checkbox"
@@ -302,23 +303,26 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                     />
                     <span style={{ fontSize: '14px', color: '#374151' }}>Enabled</span>
                   </label>
-                  {toolbarForm.websitePatterns.length > 1 && (
-                    <button
-                      onClick={() => deletePattern(index)}
-                      style={{
-                        padding: '8px 12px',
-                        backgroundColor: 'transparent',
-                        color: '#ef4444',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
-                      title="Delete pattern"
-                    >
-                      🗑️
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      if (toolbarForm.websitePatterns.length > 1) {
+                        deletePattern(index);
+                      }
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: 'transparent',
+                      color: '#ef4444',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: toolbarForm.websitePatterns.length === 1 ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      opacity: toolbarForm.websitePatterns.length === 1 ? 0.5 : 1
+                    }}
+                    title={toolbarForm.websitePatterns.length === 1 ? "Cannot delete the last pattern" : "Delete pattern"}
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
             ))}
@@ -398,8 +402,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                 transition: 'all 0.2s ease',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                   <div style={{
                     width: '24px',
                     height: '24px',
@@ -408,7 +412,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                     justifyContent: 'center',
                     alignItems: 'center',
                     cursor: 'grab',
-                    color: '#9ca3af'
+                    color: '#9ca3af',
+                    flexShrink: 0
                   }}>
                     <div style={{ width: '16px', height: '2px', backgroundColor: 'currentColor', marginBottom: '3px' }}></div>
                     <div style={{ width: '16px', height: '2px', backgroundColor: 'currentColor' }}></div>
@@ -424,16 +429,17 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                     onBlur={autoSaveToolbar}
                     placeholder="Button Title"
                     style={{
-                      flex: 1,
+                      width: '100%',
                       padding: '10px 14px',
                       border: '1px solid #d1d5db',
                       borderRadius: '6px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      minWidth: 0
                     }}
                   />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
                     <input
                       type="checkbox"
                       checked={button.enabled}
