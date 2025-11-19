@@ -24,6 +24,18 @@ chrome.runtime.onMessage.addListener(async (message: Message, sender, sendRespon
         sendResponse({ success: true });
         break;
 
+      case 'GET_STORAGE':
+        const { key } = message.payload;
+        const value = await chrome.storage.local.get([key]);
+        sendResponse({ success: true, data: value[key] });
+        break;
+
+      case 'SET_STORAGE':
+        const { setKey, setValue } = message.payload;
+        await chrome.storage.local.set({ [setKey]: setValue });
+        sendResponse({ success: true });
+        break;
+
       case 'API_REQUEST':
         const apiRequest = message.payload as APIRequest;
         const apiResponse = await llmClient.makeRequest(apiRequest);

@@ -1,7 +1,94 @@
-import { Storage } from '@plasmohq/storage';
-import type { AgentBarConfig, LLMResponse, STORAGE_KEYS } from '../types';
+import type { AgentBarConfig, LLMResponse, ToolbarConfig } from '../types';
 
-const storage = new Storage();
+// Use Chrome storage API directly for content script compatibility
+const storage = {
+  get: async (key: string): Promise<any> => {
+    console.log('🔧 Storage: Attempting to get key:', key);
+
+    // Check if we're in a content script and need to use message passing
+    if (typeof window !== 'undefined' && window.location && chrome && chrome.runtime) {
+      try {
+        // Try direct API access first
+        if (chrome.storage && chrome.storage.local) {
+          return new Promise((resolve) => {
+            chrome.storage.local.get([key], (result) => {
+              console.log('🔧 Storage: Direct access - Raw result for key', key, ':', result);
+              console.log('🔧 Storage: Direct access - Value for key', key, ':', result[key]);
+              resolve(result[key]);
+            });
+          });
+        }
+
+        // Fallback to message passing
+        const response = await chrome.runtime.sendMessage({
+          type: 'GET_STORAGE',
+          payload: { key }
+        });
+
+        console.log('🔧 Storage: Message passing - Value for key', key, ':', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('❌ Storage: All access methods failed:', error);
+        return undefined;
+      }
+    }
+
+    // Fallback for other contexts
+    console.error('❌ Storage: Chrome storage API not available');
+    return undefined;
+  },
+  set: async (key: string, value: any): Promise<void> => {
+    console.log('🔧 Storage: Attempting to set key:', key);
+
+    // Check if we're in a content script and need to use message passing
+    if (typeof window !== 'undefined' && window.location && chrome && chrome.runtime) {
+      try {
+        // Try direct API access first
+        if (chrome.storage && chrome.storage.local) {
+          return new Promise((resolve) => {
+            chrome.storage.local.set({ [key]: value }, () => {
+              console.log('🔧 Storage: Direct access - Set key', key, 'successfully');
+              resolve();
+            });
+          });
+        }
+
+        // Fallback to message passing
+        await chrome.runtime.sendMessage({
+          type: 'SET_STORAGE',
+          payload: { setKey: key, setValue: value }
+        });
+
+        console.log('🔧 Storage: Message passing - Set key', key, 'successfully');
+        return;
+      } catch (error) {
+        console.error('❌ Storage: All set methods failed:', error);
+        return;
+      }
+    }
+
+    // Fallback for other contexts
+    console.error('❌ Storage: Chrome storage API not available for setting');
+  },
+  remove: async (key: string): Promise<void> => {
+    return new Promise((resolve) => {
+      chrome.storage.local.remove([key], () => resolve());
+    });
+  },
+  watch: (callbacks: { [key: string]: (changes: { [key: string]: chrome.storage.StorageChange }) => void }) => {
+    if (chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'local') {
+          Object.keys(callbacks).forEach(key => {
+            if (changes[key]) {
+              callbacks[key](changes);
+            }
+          });
+        }
+      });
+    }
+  }
+};
 
 // Default configuration
 export const DEFAULT_CONFIG: AgentBarConfig = {
@@ -21,37 +108,31 @@ export const DEFAULT_CONFIG: AgentBarConfig = {
   ],
   toolbarButtons: [
     {
-      id: 'default-explain',
-      name: 'Explain',
-      promptTemplate: 'Explain the following text in simple terms: {{selectedText}}',
-      llmProviderId: '',
+      id: 'toolbar-default',
+      name: '通用工具',
+      context: '适用于所有网站的通用工具',
       enabled: true,
-      urlRuleIds: ['default-all'],
-      order: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    },
-    {
-      id: 'default-translate',
-      name: 'Translate',
-      promptTemplate: 'Translate the following text to English: {{selectedText}}',
-      llmProviderId: '',
-      enabled: true,
-      urlRuleIds: ['default-all'],
-      order: 2,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    },
-    {
-      id: 'default-summarize',
-      name: 'Summarize',
-      promptTemplate: 'Summarize the following text: {{selectedText}}',
-      llmProviderId: '',
-      enabled: true,
-      urlRuleIds: ['default-all'],
-      order: 3,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      websitePatterns: [{ pattern: '*', enabled: true }],
+      buttons: [
+        {
+          id: 'default-explain',
+          title: 'Explain',
+          prompt: 'Explain the following text in simple terms: {{selectedText}}',
+          enabled: true
+        },
+        {
+          id: 'default-translate',
+          title: 'Translate',
+          prompt: 'Translate the following text to English: {{selectedText}}',
+          enabled: true
+        },
+        {
+          id: 'default-summarize',
+          title: 'Summarize',
+          prompt: 'Summarize the following text: {{selectedText}}',
+          enabled: true
+        }
+      ]
     }
   ],
   settings: {
@@ -70,14 +151,20 @@ class StorageManager {
   // Get configuration
   async getConfig(): Promise<AgentBarConfig> {
     try {
+      console.log('🔍 Storage: Getting config...');
       const config = await storage.get('agent-bar-config');
+      console.log('🔍 Storage: Raw config:', config);
+
       if (!config) {
-        await this.setConfig(DEFAULT_CONFIG);
+        console.log('🔍 Storage: No config found, using defaults');
         return DEFAULT_CONFIG;
       }
+
+      console.log('🔍 Storage: Using loaded config');
       return config;
     } catch (error) {
-      console.error('Error getting config:', error);
+      console.error('❌ Storage: Error getting config:', error);
+      console.log('🔍 Storage: Falling back to defaults');
       return DEFAULT_CONFIG;
     }
   }
@@ -117,15 +204,40 @@ class StorageManager {
     await this.setConfig({ urlRules: rules });
   }
 
-  // Get toolbar buttons
-  async getToolbarButtons(): Promise<AgentBarConfig['toolbarButtons']> {
+  // Get toolbar buttons (legacy support)
+  async getToolbarButtons(): Promise<any[]> {
     const config = await this.getConfig();
-    return config.toolbarButtons;
+    return 'toolbarButtons' in config ? config.toolbarButtons : [];
   }
 
-  // Update toolbar buttons
-  async setToolbarButtons(buttons: AgentBarConfig['toolbarButtons']): Promise<void> {
-    await this.setConfig({ toolbarButtons: buttons });
+  // Get toolbars (new structure)
+  async getToolbars(): Promise<ToolbarConfig[]> {
+    const config = await this.getConfig();
+    if ('toolbarButtons' in config && Array.isArray(config.toolbarButtons)) {
+      const firstItem = config.toolbarButtons[0];
+      if (firstItem && 'buttons' in firstItem && 'websitePatterns' in firstItem) {
+        return config.toolbarButtons as ToolbarConfig[];
+      }
+    }
+    // Return empty array for legacy configurations
+    return [];
+  }
+
+  // Update toolbar buttons (legacy support)
+  async setToolbarButtons(buttons: any[]): Promise<void> {
+    const config = await this.getConfig();
+    if ('urlRules' in config) {
+      // Legacy configuration
+      await this.setConfig({ ...config, toolbarButtons: buttons } as any);
+    } else {
+      // New configuration - this shouldn't be called, but handle gracefully
+      console.warn('setToolbarButtons called on new configuration structure');
+    }
+  }
+
+  // Update toolbars (new structure)
+  async setToolbars(toolbars: ToolbarConfig[]): Promise<void> {
+    await this.setConfig({ toolbarButtons: toolbars });
   }
 
   // Get settings

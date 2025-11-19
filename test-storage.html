@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .debug-info {
+            background: #e8f4f8;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .highlight {
+            background-color: yellow;
+            padding: 2px 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h1>Storage Debug Test</h1>
+        <div class="debug-info" id="debug-info">
+            <strong>Debug Information:</strong><br>
+            Loading...
+        </div>
+
+        <h2>Test Text Selection</h2>
+        <p>Select this <span class="highlight">test text</span> to see if the toolbar appears.</p>
+        <p>The quick brown fox jumps over the lazy dog. Select this English text for testing.</p>
+        <p>这是中文测试文本。选中这段中文来测试toolbar功能。</p>
+    </div>
+
+    <script>
+        // Debug script to check chrome storage
+        async function debugStorage() {
+            const debugDiv = document.getElementById('debug-info');
+            let debugInfo = '<strong>Debug Information:</strong><br>';
+
+            try {
+                debugInfo += 'Chrome API available: ' + (typeof chrome !== 'undefined') + '<br>';
+                debugInfo += 'Storage API available: ' + (typeof chrome.storage !== 'undefined') + '<br>';
+
+                if (typeof chrome !== 'undefined' && chrome.storage) {
+                    // Try to read the config
+                    const result = await new Promise((resolve) => {
+                        chrome.storage.local.get(['agent-bar-config'], resolve);
+                    });
+
+                    debugInfo += 'Storage result: ' + JSON.stringify(result, null, 2) + '<br>';
+
+                    if (result['agent-bar-config']) {
+                        debugInfo += 'Config found! Length: ' + JSON.stringify(result['agent-bar-config']).length + '<br>';
+                    } else {
+                        debugInfo += 'No config found in storage<br>';
+
+                        // Try to check what's in storage
+                        const allData = await new Promise((resolve) => {
+                            chrome.storage.local.get(null, resolve);
+                        });
+                        debugInfo += 'All storage keys: ' + Object.keys(allData).join(', ') + '<br>';
+                    }
+                } else {
+                    debugInfo += 'Chrome storage API not available<br>';
+                }
+            } catch (error) {
+                debugInfo += 'Error: ' + error.message + '<br>';
+            }
+
+            debugDiv.innerHTML = debugInfo;
+        }
+
+        // Run debug after page loads
+        setTimeout(debugStorage, 1000);
+
+        // Update debug info every 3 seconds
+        setInterval(debugStorage, 3000);
+    </script>
+</body>
+</html>

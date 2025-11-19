@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolbar测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        p {
+            margin: 10px 0;
+        }
+        .highlight {
+            background: yellow;
+            padding: 2px 4px;
+        }
+        .long-text {
+            height: 2000px;
+            background: linear-gradient(to bottom, #f0f0f0, #e0e0e0);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <h1>Toolbar功能测试</h1>
+        <p>这个页面用于测试Agent Bar扩展的toolbar功能。选中下面的任意文字来测试toolbar是否正常显示。</p>
+
+        <h2>测试内容</h2>
+        <p>这是一段<span class="highlight">测试文字</span>，选中它来查看toolbar是否在选中的文字上方正确显示。</p>
+
+        <p>The quick brown fox jumps over the lazy dog. This is a sample English text for testing translation functionality.</p>
+
+        <h2>代码测试</h2>
+        <pre><code>function hello() {
+    console.log("Hello, World!");
+    return "Test code for code explanation feature";
+}</code></pre>
+
+        <h2>长文本测试</h2>
+        <p>这是一段较长的中文文本，用于测试总结功能。人工智能（Artificial Intelligence，简称AI）是计算机科学的一个分支，它企图了解智能的实质，并生产出一种新的能以人类智能相似的方式做出反应的智能机器。该领域的研究包括机器人、语言识别、图像识别、自然语言处理和专家系统等。人工智能从诞生以来，理论和技术日益成熟，应用领域也不断扩大，可以设想，未来人工智能带来的科技产品，将会是人类智慧的"容器"。人工智能可以对人的意识、思维的信息过程的模拟。</p>
+    </div>
+
+    <div class="long-text">
+        <h3>滚动测试区域</h3>
+        <p>这是一个很长的区域，用于测试toolbar在滚动时的行为。选中这段文字后滚动页面，toolbar应该会自动隐藏。</p>
+        <p>Keep selecting text while scrolling to test the auto-hide functionality.</p>
+    </div>
+
+    <div class="section">
+        <h2>使用说明</h2>
+        <ul>
+            <li>选中任意文字，toolbar应该会在选中的文字上方出现</li>
+            <li>toolbar应该包含多个功能按钮（解释、翻译、总结等）</li>
+            <li>点击任意按钮应该会发送选中的文字到LLM进行处理</li>
+            <li>滚动页面或点击空白处应该会隐藏toolbar</li>
+            <li>toolbar应该在页面边界附近自动调整位置，避免超出屏幕</li>
+        </ul>
+    </div>
+</body>
+</html>

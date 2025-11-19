@@ -8,7 +8,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(pnpm run build:chrome:*)"
+      "Bash(pnpm run build:chrome:*)",
+      "Bash(npm run build)"
     ],
     "deny": [],
     "ask": []

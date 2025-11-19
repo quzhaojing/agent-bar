@@ -23,21 +23,7 @@ interface ToolbarButton {
 export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) {
   const [toolbars, setToolbars] = useState<ToolbarButton[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
-  const [toolbarForm, setToolbarForm] = useState<ToolbarButton>({
-    id: '',
-    name: 'Default Toolbar',
-    websitePatterns: [{ pattern: '*', enabled: true }],
-    context: '',
-    buttons: [
-      {
-        id: 'btn-1',
-        title: 'Explain',
-        prompt: 'Explain this: {{selectedText}}',
-        enabled: true,
-      }
-    ],
-    enabled: true,
-  });
+  const [toolbarForm, setToolbarForm] = useState<ToolbarButton>();
   const [draggedButtonIndex, setDraggedButtonIndex] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,24 +64,6 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
         const toolbar = convertedToolbars.find((t: ToolbarButton) => t.id === toolbarId);
         if (toolbar) {
           setToolbarForm(toolbar);
-        } else {
-          // Create new toolbar
-          const newToolbar: ToolbarButton = {
-            id: toolbarId,
-            name: 'Default Toolbar',
-            websitePatterns: [{ pattern: '*', enabled: true }],
-            context: '',
-            buttons: [
-              {
-                id: 'btn-1',
-                title: 'Explain',
-                prompt: 'Explain this: {{selectedText}}',
-                enabled: true,
-              }
-            ],
-            enabled: true,
-          };
-          setToolbarForm(newToolbar);
         }
       }
     } catch (error) {

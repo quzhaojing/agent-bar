@@ -41,6 +41,20 @@
   white-space: nowrap;
   min-width: 0;
   flex-shrink: 0;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: buttonSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes buttonSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .toolbar-button:hover {
@@ -163,22 +177,44 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-10px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(10px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
   }
 }
 
@@ -239,6 +275,60 @@
   }
 }
 
+/* Additional toolbar styles for better UX */
+.toolbar-container.hidden {
+  animation: fadeOut 0.15s ease-in-out forwards;
+}
+
+.toolbar-container.visible-up {
+  animation: slideDown 0.2s ease-out;
+}
+
+.toolbar-container.visible-down {
+  animation: slideUp 0.2s ease-out;
+}
+
+/* Improve toolbar visibility on different backgrounds */
+.toolbar-container {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(225, 229, 233, 0.8);
+}
+
+/* Dark theme specific improvements */
+@media (prefers-color-scheme: dark) {
+  .toolbar-container {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(55, 65, 81, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Focus styles for accessibility */
+.toolbar-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Toolbar grouping separator */
+.toolbar-buttons::before,
+.toolbar-buttons::after {
+  content: '';
+  width: 1px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 0 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .toolbar-buttons::before,
+  .toolbar-buttons::after {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .toolbar-container {
@@ -251,5 +341,189 @@
 
   .toolbar-button.loading::after {
     animation: none;
+  }
+
+  .toolbar-container.hidden,
+  .toolbar-container.visible-up,
+  .toolbar-container.visible-down {
+    animation: none;
+  }
+}
+
+/* Result Panel Styles */
+.agent-bar-result-panel {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  background: #fff;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-in-out;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(225, 229, 233, 0.8);
+}
+
+.result-panel-content {
+  padding: 12px 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  min-height: 60px;
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.text-content {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #374151;
+}
+
+.result-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 12px;
+  background: rgba(249, 250, 251, 0.8);
+  border-top: 1px solid #e5e7eb;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.action-button:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.action-button:active {
+  background: #e5e7eb;
+  transform: scale(0.95);
+}
+
+.copy-button:hover {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.retry-button:hover {
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.close-button:hover {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Dark theme support for Result Panel */
+@media (prefers-color-scheme: dark) {
+  .agent-bar-result-panel {
+    color: #e5e7eb;
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(55, 65, 81, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .text-content {
+    color: #e5e7eb;
+  }
+
+  .loading-content {
+    color: #9ca3af;
+  }
+
+  .loading-spinner {
+    border-color: #4b5563;
+    border-top-color: #3b82f6;
+  }
+
+  .result-panel-actions {
+    background: rgba(31, 41, 55, 0.8);
+    border-top-color: #4b5563;
+  }
+
+  .action-button {
+    color: #9ca3af;
+  }
+
+  .action-button:hover {
+    background: #374151;
+    color: #e5e7eb;
+  }
+
+  .copy-button:hover {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.2);
+  }
+
+  .retry-button:hover {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.2);
+  }
+
+  .close-button:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* Scrollbar styles for result panel */
+.result-panel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.result-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.result-panel-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.result-panel-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  .result-panel-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .result-panel-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 }

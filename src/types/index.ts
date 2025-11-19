@@ -107,20 +107,6 @@ export interface AgentBarConfig {
   };
 }
 
-// Legacy configuration for backward compatibility
-export interface LegacyAgentBarConfig {
-  llmProviders: LLMProvider[];
-  urlRules: UrlRule[];
-  toolbarButtons: LegacyToolbarButton[];
-  settings: {
-    theme: 'light' | 'dark';
-    autoHide: boolean;
-    showOnSelect: boolean;
-    debounceDelay: number;
-    maxHistory: number;
-  };
-}
-
 // Storage Keys
 export const STORAGE_KEYS = {
   CONFIG: 'agent-bar-config',
