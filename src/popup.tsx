@@ -34,6 +34,11 @@ const Popup = () => {
     chrome.runtime.openOptionsPage();
   };
 
+  const openOptionsRoute = (path: string) => {
+    const url = chrome.runtime.getURL(`options.html#${path}`);
+    chrome.tabs.create({ url });
+  };
+
   const getCurrentDomain = () => {
     if (!currentUrl) return 'Unknown';
     try {
@@ -119,7 +124,56 @@ const Popup = () => {
             </div>
             <div className="stat-item">
               <span className="stat-label">URL Rules:</span>
-              <span className="stat-value">{config?.urlRules.filter(r => r.enabled).length || 0}</span>
+              <span className="stat-value">{config?.urlRules?.filter(r => r.enabled).length || 0}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Configured Toolbars list */}
+        {config?.toolbarButtons && config.toolbarButtons.length > 0 && (
+          <div style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>Configured Toolbars</h3>
+              <button onClick={() => openOptionsRoute('/toolbars')} className="btn btn-secondary">Manage All</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginTop: '8px' }}>
+              {config.toolbarButtons.map((tb) => {
+                // Migrate websitePatterns like in options page
+                const websitePatterns: { pattern: string; enabled: boolean }[] = (tb.websitePatterns && Array.isArray(tb.websitePatterns))
+                  ? (typeof tb.websitePatterns[0] === 'string'
+                    ? (tb.websitePatterns as any).map((p: string) => ({ pattern: p, enabled: true }))
+                    : (tb.websitePatterns as any))
+                  : (((tb as any).urlRule) ? [{ pattern: (tb as any).urlRule, enabled: true }] : [{ pattern: '*', enabled: true }]);
+
+                const patternsText = websitePatterns
+                  .filter((wp: { pattern: string; enabled: boolean }) => wp.enabled)
+                  .map((wp: { pattern: string; enabled: boolean }) => wp.pattern)
+                  .join(', ');
+
+                return (
+                  <div key={tb.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    background: tb.enabled ? '#f9fafb' : '#f3f4f6'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: tb.enabled ? '#111827' : '#9ca3af' }}>{tb.name}</div>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>Patterns: <span style={{ fontFamily: 'monospace', color: '#374151' }}>{patternsText || '*'}</span></div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => openOptionsRoute(`/toolbar/${tb.id}`)}
+                        className="btn btn-text"
+                        title="Edit toolbar"
+                      >Edit</button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

@@ -35,7 +35,7 @@ const providerModels = {
   ],
   deepseek: [
     { value: 'deepseek-chat', label: 'DeepSeek Chat' },
-    { value: 'deepseek-coder', label: 'DeepSeek Coder' },
+    { value: 'deepseek-reasoner', label: 'DeepSeek Reasoner' },
   ],
   qwen: [
     { value: 'qwen-turbo', label: 'Qwen Turbo' },
@@ -109,11 +109,10 @@ export default function LLMProviderPage() {
         if (config.llmProviders.length > 0) {
           const provider = config.llmProviders[0];
           setProviderForm({
-            id: provider.id,
             name: provider.name,
             type: provider.type,
             apiKey: provider.apiKey,
-            baseUrl: provider.baseUrl || providerDefaults[provider.type].baseUrl,
+            baseUrl: provider.baseUrl || providerDefaults[provider.type as keyof typeof providerDefaults].baseUrl,
             model: provider.model,
             temperature: provider.temperature,
             maxTokens: provider.maxTokens,
@@ -161,7 +160,17 @@ export default function LLMProviderPage() {
 
     const updatedProviders = [updatedProvider];
     setProviders(updatedProviders);
-    setProviderForm(updatedProvider);
+    setProviderForm({
+      name: updatedProvider.name,
+      type: updatedProvider.type as 'openai',
+      apiKey: updatedProvider.apiKey,
+      baseUrl: updatedProvider.baseUrl,
+      model: updatedProvider.model,
+      temperature: updatedProvider.temperature,
+      maxTokens: updatedProvider.maxTokens,
+      enabled: updatedProvider.enabled,
+      isDefault: updatedProvider.isDefault,
+    });
     saveData({ llmProviders: updatedProviders });
 
     if (existingProvider) {
@@ -178,7 +187,7 @@ export default function LLMProviderPage() {
       baseUrl: defaults.baseUrl,
       model: defaults.model,
     };
-    autoSaveProvider(updates);
+    autoSaveProvider(updates as Partial<typeof providerForm>);
   };
 
   return (

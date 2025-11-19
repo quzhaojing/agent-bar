@@ -8,6 +8,8 @@ interface ResultPanelProps {
   onClose: () => void;
   onCopy: () => void;
   onRetry: () => void;
+  onConfigure?: () => void;
+  showConfigure?: boolean;
 }
 
 const ResultPanel: React.FC<ResultPanelProps> = ({
@@ -18,6 +20,8 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   onClose,
   onCopy,
   onRetry,
+  onConfigure,
+  showConfigure,
 }) => {
   if (!visible) return null;
 
@@ -85,6 +89,19 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
       </div>
 
       <div className="result-panel-actions">
+        {showConfigure && (
+          <button
+            className="action-button configure-button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onConfigure) onConfigure();
+            }}
+            title="Configure provider"
+          >
+            ⚙️
+          </button>
+        )}
         <button
           className="action-button copy-button"
           onMouseDown={(e) => e.preventDefault()}

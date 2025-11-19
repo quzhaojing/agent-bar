@@ -15,6 +15,7 @@ interface ToolbarPanelProps {
     onResultPanelClose: () => void;
     onResultPanelCopy: () => void;
     onResultPanelRetry: () => void;
+    onDragStart?: (e: React.MouseEvent) => void;
 }
 
 const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
@@ -59,6 +60,16 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                     buttons={buttons}
                     loading={loading}
                     onButtonClick={onButtonClick}
+                    extraLeftControls={(
+                        <button
+                            className="toolbar-button"
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                            }}
+                            title="Drag"
+                        >⠿</button>
+                    )}
+                    extraRightControls={null}
                 />
                 {position.direction === 'up' && (
                     <div className="toolbar-arrow toolbar-arrow-up" />
@@ -76,7 +87,6 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                         onClose={onResultPanelClose}
                         onCopy={onResultPanelCopy}
                         onRetry={onResultPanelRetry}
-                        isEmbedded={true}
                     />
                 )}
             </div>

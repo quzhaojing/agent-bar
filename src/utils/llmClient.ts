@@ -1,7 +1,7 @@
 import type { LLMProvider, APIRequest, APIResponse } from '../types';
 
 class LLMClient {
-  private async makeRequest(url: string, headers: Record<string, string>, body: any): Promise<Response> {
+  private async httpRequest(url: string, headers: Record<string, string>, body: any): Promise<Response> {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -110,7 +110,7 @@ class LLMClient {
     };
 
     try {
-      const response = await this.makeRequest(
+      const response = await this.httpRequest(
         `${provider.baseUrl || 'https://api.openai.com/v1'}/chat/completions`,
         headers,
         body
@@ -163,7 +163,7 @@ class LLMClient {
     };
 
     try {
-      const response = await this.makeRequest(
+      const response = await this.httpRequest(
         `${provider.baseUrl || 'https://api.anthropic.com/v1'}/messages`,
         headers,
         body
@@ -219,7 +219,7 @@ class LLMClient {
     };
 
     try {
-      const response = await this.makeRequest(
+      const response = await this.httpRequest(
         `${provider.baseUrl || 'https://generativelanguage.googleapis.com/v1beta'}/models/${provider.model}:generateContent`,
         headers,
         body
@@ -276,7 +276,7 @@ class LLMClient {
         throw new Error('Base URL is required for this provider');
       }
 
-      const response = await this.makeRequest(`${provider.baseUrl}/chat/completions`, headers, body);
+      const response = await this.httpRequest(`${provider.baseUrl}/chat/completions`, headers, body);
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content;
 
@@ -304,6 +304,13 @@ class LLMClient {
   // Main request handler
   async makeRequest(request: APIRequest): Promise<APIResponse> {
     const { provider } = request;
+
+    if (!provider) {
+      return {
+        success: false,
+        error: 'Provider is required',
+      };
+    }
 
     if (!provider.apiKey) {
       return {

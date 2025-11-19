@@ -5,11 +5,14 @@ interface ToolbarButtonsProps {
     buttons: (ToolbarButtonConfig & { toolbarId: string; toolbarName: string })[];
     loading: boolean;
     onButtonClick: (button: ToolbarButton | ToolbarButtonConfig) => void;
+    extraLeftControls?: React.ReactNode;
+    extraRightControls?: React.ReactNode;
 }
 
-const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onButtonClick }) => {
+const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onButtonClick, extraLeftControls, extraRightControls }) => {
     return (
         <div className="toolbar-buttons">
+            {extraLeftControls}
             {buttons.map((btn, index) => {
                 const button = btn as any;
                 return (
@@ -31,6 +34,7 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                     </button>
                 );
             })}
+            {extraRightControls}
         </div>
     );
 };

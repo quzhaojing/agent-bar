@@ -90,63 +90,9 @@ const storage = {
   }
 };
 
-// Default configuration
-export const DEFAULT_CONFIG: AgentBarConfig = {
-  llmProviders: [],
-  urlRules: [
-    {
-      id: 'default-all',
-      name: 'All Websites',
-      type: 'host',
-      pattern: '*',
-      enabled: true,
-      priority: 999,
-      isWhitelist: true,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }
-  ],
-  toolbarButtons: [
-    {
-      id: 'toolbar-default',
-      name: '通用工具',
-      context: '适用于所有网站的通用工具',
-      enabled: true,
-      websitePatterns: [{ pattern: '*', enabled: true }],
-      buttons: [
-        {
-          id: 'default-explain',
-          title: 'Explain',
-          prompt: 'Explain the following text in simple terms: {{selectedText}}',
-          enabled: true
-        },
-        {
-          id: 'default-translate',
-          title: 'Translate',
-          prompt: 'Translate the following text to English: {{selectedText}}',
-          enabled: true
-        },
-        {
-          id: 'default-summarize',
-          title: 'Summarize',
-          prompt: 'Summarize the following text: {{selectedText}}',
-          enabled: true
-        }
-      ]
-    }
-  ],
-  settings: {
-    theme: 'light',
-    autoHide: true,
-    showOnSelect: true,
-    debounceDelay: 300,
-    maxHistory: 50,
-  }
-};
-
 class StorageManager {
   private cache = new Map<string, any>();
-  private cacheTimeout = new Map<string, NodeJS.Timeout>();
+  private cacheTimeout = new Map<string, ReturnType<typeof setTimeout>>();
 
   // Get configuration
   async getConfig(): Promise<AgentBarConfig> {
@@ -157,7 +103,7 @@ class StorageManager {
 
       if (!config) {
         console.log('🔍 Storage: No config found, using defaults');
-        return DEFAULT_CONFIG;
+        return {} as AgentBarConfig;
       }
 
       console.log('🔍 Storage: Using loaded config');
@@ -165,7 +111,7 @@ class StorageManager {
     } catch (error) {
       console.error('❌ Storage: Error getting config:', error);
       console.log('🔍 Storage: Falling back to defaults');
-      return DEFAULT_CONFIG;
+      return {} as AgentBarConfig;
     }
   }
 

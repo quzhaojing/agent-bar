@@ -4,10 +4,7 @@ import type {
   Message,
   APIRequest,
   LLMResponse,
-  ToolbarConfig,
-  ToolbarExportData,
-  TemplateConfig,
-  AgentBarConfig
+  MessageType
 } from './types';
 
 // Handle messages from content script and popup
@@ -24,13 +21,13 @@ chrome.runtime.onMessage.addListener(async (message: Message, sender, sendRespon
         sendResponse({ success: true });
         break;
 
-      case 'GET_STORAGE':
+      case 'GET_STORAGE' as MessageType:
         const { key } = message.payload;
         const value = await chrome.storage.local.get([key]);
         sendResponse({ success: true, data: value[key] });
         break;
 
-      case 'SET_STORAGE':
+      case 'SET_STORAGE' as MessageType:
         const { setKey, setValue } = message.payload;
         await chrome.storage.local.set({ [setKey]: setValue });
         sendResponse({ success: true });
@@ -38,10 +35,14 @@ chrome.runtime.onMessage.addListener(async (message: Message, sender, sendRespon
 
       case 'API_REQUEST':
         const apiRequest = message.payload as APIRequest;
+        if (!apiRequest || !apiRequest.provider) {
+          sendResponse({ success: false, error: 'No LLM provider configured or enabled' });
+          break;
+        }
         const apiResponse = await llmClient.makeRequest(apiRequest);
 
         // Save to history if successful
-        if (apiResponse.success && apiResponse.data) {
+        if (apiResponse.success && apiResponse.data && apiRequest.provider) {
           const llmResponse: LLMResponse = {
             id: `response-${Date.now()}`,
             content: apiResponse.data,
@@ -49,7 +50,7 @@ chrome.runtime.onMessage.addListener(async (message: Message, sender, sendRespon
             model: apiRequest.provider.model,
             prompt: apiRequest.prompt.replace('{{selectedText}}', apiRequest.selectedText),
             timestamp: Date.now(),
-            usage: apiResponse.usage,
+            ...(apiResponse.usage && { usage: apiResponse.usage }),
           };
           await storageManager.addToHistory(llmResponse);
         }

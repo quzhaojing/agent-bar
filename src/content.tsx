@@ -13,14 +13,18 @@ const AgentBarApp: React.FC = () => {
   const [currentUrl, setCurrentUrl] = useState<string>('');
   const [toolbars, setToolbars] = useState<ToolbarConfig[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Result panel state
   const [resultPanelVisible, setResultPanelVisible] = useState(false);
   const [resultPanelContent, setResultPanelContent] = useState('');
   const [resultPanelPosition, setResultPanelPosition] = useState({ x: 0, y: 0 });
+  const [resultPanelShowConfigure, setResultPanelShowConfigure] = useState(false);
 
-  const debounceTimerRef = useRef<NodeJS.Timeout>();
+  const debounceTimerRef = useRef<number | undefined>();
   const containerRef = useRef<HTMLDivElement>(null);
+  const dragOffsetRef = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
 
   // Initialize
   useEffect(() => {
@@ -138,7 +142,9 @@ const AgentBarApp: React.FC = () => {
         return;
       }
 
-      hideToolbar();
+      if (!isPinned) {
+        hideToolbar();
+      }
       return;
     }
 
@@ -200,17 +206,16 @@ const AgentBarApp: React.FC = () => {
     const margin = 10;
 
     let x = rect.left + rect.width / 2 - toolbarWidth / 2;
-    let y = rect.top - toolbarHeight - margin;
+    let y = rect.top;
     let direction: 'up' | 'down' = 'up';
 
     console.log('📍 Initial position:', { x, y, direction });
 
-    // Adjust position if toolbar would go off-screen
-    if (y < window.scrollY + margin) {
-      y = rect.bottom + margin;
-      direction = 'down';
-      console.log('⬇️ Adjusted to show below text');
-    }
+    // Clamp within viewport vertically to avoid going off-screen
+    const minY = window.scrollY + margin;
+    const maxY = window.scrollY + window.innerHeight - toolbarHeight - margin;
+    if (y < minY) y = minY;
+    if (y > maxY) y = maxY;
 
     if (x < window.scrollX + margin) {
       x = window.scrollX + margin;
@@ -246,7 +251,9 @@ const AgentBarApp: React.FC = () => {
 
     // Only hide if click is outside both toolbar and result panel
     if (!isInsideToolbar && !isInsideResultPanel) {
-      hideToolbar();
+      if (!isPinned) {
+        hideToolbar();
+      }
       // Also hide result panel if it's visible
       if (resultPanelVisible) {
         handleResultPanelClose();
@@ -256,7 +263,9 @@ const AgentBarApp: React.FC = () => {
 
   // Handle scroll
   const handleScroll = () => {
-    hideToolbar();
+    if (!isPinned) {
+      hideToolbar();
+    }
     // Also hide result panel on scroll
     if (resultPanelVisible) {
       handleResultPanelClose();
@@ -324,8 +333,12 @@ const AgentBarApp: React.FC = () => {
       }
 
       if (!provider) {
-        throw new Error('No LLM provider configured or enabled');
+        setResultPanelContent('No LLM provider configured or enabled');
+        setResultPanelShowConfigure(true);
+        setLoading(false);
+        return;
       }
+      setResultPanelShowConfigure(false);
 
       // Prepare API request
       const prompt = ('promptTemplate' in button ? button.promptTemplate : button.prompt)
@@ -352,6 +365,7 @@ const AgentBarApp: React.FC = () => {
     } catch (error) {
       console.error('Error handling button click:', error);
       setResultPanelContent(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setResultPanelShowConfigure(false);
     } finally {
       setLoading(false);
     }
@@ -398,6 +412,54 @@ const AgentBarApp: React.FC = () => {
     // Implementation would depend on storing the last request
   };
 
+  const handleResultPanelConfigure = () => {
+    try {
+      chrome.runtime.openOptionsPage();
+    } catch {}
+  };
+
+  const togglePin = () => {
+    setIsPinned(prev => !prev);
+  };
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+    dragOffsetRef.current = {
+      dx: e.pageX - position.x,
+      dy: e.pageY - position.y,
+    };
+
+    const onMove = (ev: MouseEvent) => {
+      const margin = 10;
+      const toolbarWidth = 200;
+      const toolbarHeight = 40;
+      let newX = ev.pageX - dragOffsetRef.current.dx;
+      let newY = ev.pageY - dragOffsetRef.current.dy;
+
+      // Clamp within viewport
+      const minX = window.scrollX + margin;
+      const maxX = window.scrollX + window.innerWidth - toolbarWidth - margin;
+      const minY = window.scrollY + margin;
+      const maxY = window.scrollY + window.innerHeight - toolbarHeight - margin;
+      newX = Math.max(minX, Math.min(maxX, newX));
+      newY = Math.max(minY, Math.min(maxY, newY));
+
+      setPosition(prev => ({ ...prev, x: newX, y: newY }));
+    };
+
+    const onUp = (ev: MouseEvent) => {
+      ev.stopPropagation();
+      setIsDragging(false);
+      document.removeEventListener('mousemove', onMove, true);
+      document.removeEventListener('mouseup', onUp, true);
+    };
+
+    document.addEventListener('mousemove', onMove, true);
+    document.addEventListener('mouseup', onUp, true);
+  };
+
   // Get buttons to display for current URL
   const displayButtons = React.useMemo(() => {
     console.log('🔄 Computing displayButtons...', { isVisible, currentUrl });
@@ -435,9 +497,9 @@ const AgentBarApp: React.FC = () => {
     return result;
   }, [isVisible, currentUrl, toolbars]);
 
-  console.log('🎨 Rendering check:', { isVisible, displayButtonsLength: displayButtons.length });
+  console.log('🎨 Rendering check:', { isVisible, displayButtonsLength: displayButtons.length, isPinned });
 
-  if (!isVisible || displayButtons.length === 0) {
+  if (!isPinned && (!isVisible || displayButtons.length === 0)) {
     console.log('❌ Not rendering toolbar - conditions not met', { isVisible, displayButtonsLength: displayButtons.length });
     return null;
   }
@@ -459,14 +521,22 @@ const AgentBarApp: React.FC = () => {
           left: `${position.x}px`,
           top: `${position.y}px`,
           zIndex: 10000,
-          pointerEvents: isVisible ? 'auto' : 'none',
+          pointerEvents: isVisible || isPinned ? 'auto' : 'none',
         }}
       >
-          <div className={`toolbar-container ${position.visible
+          <div className={`toolbar-container ${(position.visible || isPinned)
           ? position.direction === 'up' ? 'visible-up' : 'visible-down'
           : 'hidden'
           }`}>
             <div className="toolbar-buttons">
+              <button
+                className="toolbar-button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleDragStart(e);
+                }}
+                title="Drag"
+              >⠿</button>
               {displayButtons.map((button, index) => {
                 console.log(`🔘 Rendering button ${index}:`, button);
                 return (
@@ -487,6 +557,7 @@ const AgentBarApp: React.FC = () => {
                   </button>
                 );
               })}
+              
             </div>
             {position.direction === 'up' && (
               <div className="toolbar-arrow toolbar-arrow-up" />
@@ -494,17 +565,19 @@ const AgentBarApp: React.FC = () => {
             {position.direction === 'down' && (
               <div className="toolbar-arrow toolbar-arrow-down" />
             )}
-            {resultPanelVisible && (
-              <ResultPanel
-                visible={resultPanelVisible}
-                content={resultPanelContent}
-                loading={loading}
-                position={resultPanelPosition}
-                onClose={handleResultPanelClose}
-                onCopy={handleResultPanelCopy}
-                onRetry={handleResultPanelRetry}
-              />
-            )}
+          {resultPanelVisible && (
+            <ResultPanel
+              visible={resultPanelVisible}
+              content={resultPanelContent}
+              loading={loading}
+              position={resultPanelPosition}
+              onClose={handleResultPanelClose}
+              onCopy={handleResultPanelCopy}
+              onRetry={handleResultPanelRetry}
+              onConfigure={handleResultPanelConfigure}
+              showConfigure={resultPanelShowConfigure}
+            />
+          )}
           </div>
         </div>
       </>
