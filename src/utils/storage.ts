@@ -90,6 +90,18 @@ const storage = {
   }
 };
 
+const DEFAULT_CONFIG: AgentBarConfig = {
+  llmProviders: [],
+  toolbarButtons: [],
+  settings: {
+    theme: 'light',
+    autoHide: false,
+    showOnSelect: true,
+    debounceDelay: 500,
+    maxHistory: 50
+  }
+};
+
 class StorageManager {
   private cache = new Map<string, any>();
   private cacheTimeout = new Map<string, ReturnType<typeof setTimeout>>();
@@ -103,15 +115,15 @@ class StorageManager {
 
       if (!config) {
         console.log('🔍 Storage: No config found, using defaults');
-        return {} as AgentBarConfig;
+        return DEFAULT_CONFIG;
       }
 
       console.log('🔍 Storage: Using loaded config');
-      return config;
+      return { ...DEFAULT_CONFIG, ...config };
     } catch (error) {
       console.error('❌ Storage: Error getting config:', error);
       console.log('🔍 Storage: Falling back to defaults');
-      return {} as AgentBarConfig;
+      return DEFAULT_CONFIG;
     }
   }
 

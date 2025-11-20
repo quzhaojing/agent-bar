@@ -13,9 +13,9 @@ const AgentBarApp: React.FC = () => {
   const [currentUrl, setCurrentUrl] = useState<string>('');
   const [toolbars, setToolbars] = useState<ToolbarConfig[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-
+  const [isPinned, _setIsPinned] = useState(false);
+  const [_isDragging, setIsDragging] = useState(false);
+  
   // Result panel state
   const [resultPanelVisible, setResultPanelVisible] = useState(false);
   const [resultPanelContent, setResultPanelContent] = useState('');
@@ -86,7 +86,7 @@ const AgentBarApp: React.FC = () => {
       console.log('📝 Select start event fired', e);
     }, true);
 
-    document.addEventListener('selectionchange', (e) => {
+    document.addEventListener('selectionchange', (_e) => {
       console.log('🔄 Selection change event fired');
       handleTextSelection();
     });
@@ -418,10 +418,7 @@ const AgentBarApp: React.FC = () => {
     } catch {}
   };
 
-  const togglePin = () => {
-    setIsPinned(prev => !prev);
-  };
-
+  
   const handleDragStart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();

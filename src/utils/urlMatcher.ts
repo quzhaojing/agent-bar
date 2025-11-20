@@ -1,4 +1,4 @@
-import type { UrlRule, ToolbarConfig, WebsitePattern } from '../types';
+import type { UrlRule, ToolbarConfig } from '../types';
 
 interface MatchResult {
   matched: boolean;

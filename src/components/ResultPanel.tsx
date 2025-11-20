@@ -16,7 +16,6 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   visible,
   content,
   loading,
-  position,
   onClose,
   onCopy,
   onRetry,

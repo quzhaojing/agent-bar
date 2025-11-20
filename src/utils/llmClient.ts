@@ -18,75 +18,8 @@ class LLMClient {
     return response;
   }
 
-  private async handleStreamResponse(response: Response, onChunk: (chunk: string) => void): Promise<string> {
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-
-    if (!reader) {
-      throw new Error('Response body is not readable');
-    }
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              return fullText;
-            }
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = this.extractContent(parsed);
-              if (content) {
-                fullText += content;
-                onChunk(content);
-              }
-            } catch (e) {
-              // Ignore JSON parse errors for malformed chunks
-            }
-          }
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
-
-    return fullText;
-  }
-
-  private extractContent(data: any): string {
-    // OpenAI format
-    if (data.choices?.[0]?.delta?.content) {
-      return data.choices[0].delta.content;
-    }
-    if (data.choices?.[0]?.text) {
-      return data.choices[0].text;
-    }
-
-    // Claude format
-    if (data.content?.[0]?.text) {
-      return data.content[0].text;
-    }
-    if (data.delta?.text) {
-      return data.delta.text;
-    }
-
-    // Gemini format
-    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      return data.candidates[0].content.parts[0].text;
-    }
-
-    return '';
-  }
-
+  
+  
   // OpenAI API handler
   private async handleOpenAI(request: APIRequest): Promise<APIResponse> {
     const { provider, prompt, selectedText } = request;

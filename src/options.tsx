@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
 import { useRouter } from './options/router';
 import LLMProviderPage from './options/pages/LLMProviderPage';
 import ToolbarListPage from './options/pages/ToolbarListPage';
 import ToolbarDetailPage from './options/pages/ToolbarDetailPage';
-import icon48 from 'assets/icon48.png';
+import icon48 from '../assets/icon48.png';
 
 // Register routes
 import { router } from './options/router';
@@ -14,8 +13,8 @@ router.addRoute('/provider', LLMProviderPage);
 router.addRoute('/toolbars', ToolbarListPage);
 
 // Handle dynamic routes for toolbar detail
-router.addRoute('/toolbar/:id', ({ params }: { params: { id: string } }) => (
-  <ToolbarDetailPage toolbarId={params.id} />
+router.addRoute('/toolbar/:id', (props: { params: Record<string, string> }) => (
+  <ToolbarDetailPage toolbarId={props.params.id} />
 ));
 
 function OptionsPage() {

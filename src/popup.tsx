@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { storageManager } from './utils/storage';
+import { urlMatcher } from './utils/urlMatcher';
 import type { AgentBarConfig } from './types';
 import './popup.css';
+import { Icon } from '@iconify/react';
 
 const Popup = () => {
   const [config, setConfig] = useState<AgentBarConfig | null>(null);
@@ -56,8 +58,22 @@ const Popup = () => {
     );
   }
 
-  const enabledProviders = config?.llmProviders.filter(p => p.enabled) || [];
+  const enabledProviders = config?.llmProviders?.filter(p => p.enabled) || [];
   const defaultProvider = enabledProviders.find(p => p.isDefault) || enabledProviders[0];
+  const normalizedToolbars = (config?.toolbarButtons || []).map((tb: any) => {
+    let websitePatterns = tb.websitePatterns;
+    if (websitePatterns && Array.isArray(websitePatterns)) {
+      if (websitePatterns.length > 0 && typeof websitePatterns[0] === 'string') {
+        websitePatterns = (websitePatterns as any).map((p: string) => ({ pattern: p, enabled: true }));
+      }
+    } else if (tb.urlRule) {
+      websitePatterns = [{ pattern: tb.urlRule, enabled: true }];
+    } else {
+      websitePatterns = [{ pattern: '*', enabled: true }];
+    }
+    return { ...tb, websitePatterns };
+  });
+  const matchingToolbars = urlMatcher.getToolbarsForUrl(currentUrl, normalizedToolbars);
 
   return (
     <div className="popup">
@@ -89,26 +105,21 @@ const Popup = () => {
                 <span className="provider-type">({defaultProvider.type})</span>
               </>
             ) : (
-              <span className="no-provider">No provider configured</span>
+              <a
+                href="#"
+                className="no-provider"
+                onClick={() => openOptionsRoute('/provider')}
+              >
+                No provider configured
+              </a>
             )}
           </div>
         </div>
 
-        <div className="quick-actions">
-          <button
-            onClick={openOptions}
-            className="btn btn-primary btn-full"
-          >
-            Open Settings
-          </button>
-        </div>
-
-        {enabledProviders.length === 0 && (
+        {matchingToolbars.length === 0 && (
           <div className="setup-notice">
-            <p>No LLM providers configured. Configure your first provider to start using Agent Bar.</p>
-            <button onClick={openOptions} className="btn btn-secondary">
-              Setup Provider
-            </button>
+            <p>No matching toolbars for this page</p>
+            <button onClick={() => openOptionsRoute('/toolbars')} className="btn btn-primary btn-full">Create one</button>
           </div>
         )}
 
@@ -120,7 +131,7 @@ const Popup = () => {
             </div>
             <div className="stat-item">
               <span className="stat-label">Toolbar Buttons:</span>
-              <span className="stat-value">{config?.toolbarButtons.filter(b => b.enabled).length || 0}</span>
+              <span className="stat-value">{config?.toolbarButtons?.filter(b => b.enabled).length || 0}</span>
             </div>
             <div className="stat-item">
               <span className="stat-label">URL Rules:</span>
@@ -180,15 +191,16 @@ const Popup = () => {
       </div>
 
       <div className="popup-footer">
-        <button onClick={openOptions} className="btn btn-text">
-          Settings
+        <button onClick={openOptions} className="btn btn-text btn-icon" title="Settings">
+          <Icon icon="material-symbols:settings" width="22" height="22" />
         </button>
         <a
-          href="https://github.com/agent-bar/agent-bar"
+          href="https://github.com/quzhaojing/agent-bar"
           target="_blank"
-          className="btn btn-text"
+          className="btn btn-text btn-icon"
+          title="GitHub"
         >
-          GitHub
+          <Icon icon="mdi:github" width="22" height="22" />
         </a>
       </div>
     </div>

@@ -23,7 +23,14 @@ interface ToolbarButton {
 export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) {
   const [toolbars, setToolbars] = useState<ToolbarButton[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
-  const [toolbarForm, setToolbarForm] = useState<ToolbarButton>();
+  const [toolbarForm, setToolbarForm] = useState<ToolbarButton>({
+    id: toolbarId,
+    name: '',
+    websitePatterns: [{ pattern: '*', enabled: true }],
+    context: '',
+    buttons: [],
+    enabled: true
+  });
   const [draggedButtonIndex, setDraggedButtonIndex] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +97,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
   };
 
   const autoSaveToolbar = () => {
+    if (!toolbarForm) return;
+
     const existingIndex = toolbars.findIndex(t => t.id === toolbarId);
     let updatedToolbars: ToolbarButton[];
 
@@ -109,6 +118,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
   };
 
   const addButton = () => {
+    if (!toolbarForm) return;
+
     const newToolbar = {
       ...toolbarForm,
       buttons: [...toolbarForm.buttons, {
@@ -123,6 +134,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
   };
 
   const deleteButton = (buttonId: string) => {
+    if (!toolbarForm) return;
+
     const newButtons = toolbarForm.buttons.filter(button => button.id !== buttonId);
     setToolbarForm({ ...toolbarForm, buttons: newButtons });
     autoSaveToolbar();
@@ -138,7 +151,7 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
     e.preventDefault();
-    if (draggedButtonIndex === null || draggedButtonIndex === dropIndex) return;
+    if (draggedButtonIndex === null || draggedButtonIndex === dropIndex || !toolbarForm) return;
 
     const newButtons = [...toolbarForm.buttons];
     const draggedButton = newButtons[draggedButtonIndex];
@@ -156,6 +169,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
   };
 
   const addPattern = () => {
+    if (!toolbarForm) return;
+
     setToolbarForm({
       ...toolbarForm,
       websitePatterns: [...toolbarForm.websitePatterns, { pattern: '', enabled: true }]
@@ -164,15 +179,44 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
   };
 
   const deletePattern = (index: number) => {
+    if (!toolbarForm) return;
+
     const newPatterns = toolbarForm.websitePatterns.filter((_, i) => i !== index);
     setToolbarForm({ ...toolbarForm, websitePatterns: newPatterns });
     autoSaveToolbar();
   };
 
   const updatePattern = (index: number, updates: Partial<WebsitePattern>) => {
+    if (!toolbarForm) return;
+
     const newPatterns = [...toolbarForm.websitePatterns];
     newPatterns[index] = { ...newPatterns[index], ...updates };
     setToolbarForm({ ...toolbarForm, websitePatterns: newPatterns });
+    autoSaveToolbar();
+  };
+
+  const updateButtonTitle = (index: number, title: string) => {
+    if (!toolbarForm) return;
+
+    const newButtons = [...toolbarForm.buttons];
+    newButtons[index].title = title;
+    setToolbarForm({ ...toolbarForm, buttons: newButtons });
+  };
+
+  const updateButtonPrompt = (index: number, prompt: string) => {
+    if (!toolbarForm) return;
+
+    const newButtons = [...toolbarForm.buttons];
+    newButtons[index].prompt = prompt;
+    setToolbarForm({ ...toolbarForm, buttons: newButtons });
+  };
+
+  const updateButtonEnabled = (index: number, enabled: boolean) => {
+    if (!toolbarForm) return;
+
+    const newButtons = [...toolbarForm.buttons];
+    newButtons[index].enabled = enabled;
+    setToolbarForm({ ...toolbarForm, buttons: newButtons });
     autoSaveToolbar();
   };
 
@@ -180,6 +224,28 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <div style={{ color: '#6b7280' }}>Loading toolbar...</div>
+      </div>
+    );
+  }
+
+  if (!toolbarForm) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <div style={{ color: '#6b7280' }}>Toolbar not found</div>
+        <button
+          onClick={() => router.navigate('/toolbars')}
+          style={{
+            marginTop: '16px',
+            padding: '8px 16px',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer'
+          }}
+        >
+          Back to Toolbars
+        </button>
       </div>
     );
   }
@@ -407,11 +473,7 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                   <input
                     type="text"
                     value={button.title}
-                    onChange={(e) => {
-                      const newButtons = [...toolbarForm.buttons];
-                      newButtons[index].title = e.target.value;
-                      setToolbarForm({ ...toolbarForm, buttons: newButtons });
-                    }}
+                    onChange={(e) => updateButtonTitle(index, e.target.value)}
                     onBlur={autoSaveToolbar}
                     placeholder="Button Title"
                     style={{
@@ -429,12 +491,7 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                     <input
                       type="checkbox"
                       checked={button.enabled}
-                      onChange={(e) => {
-                        const newButtons = [...toolbarForm.buttons];
-                        newButtons[index].enabled = e.target.checked;
-                        setToolbarForm({ ...toolbarForm, buttons: newButtons });
-                        autoSaveToolbar();
-                      }}
+                      onChange={(e) => updateButtonEnabled(index, e.target.checked)}
                       style={{ marginRight: '6px' }}
                     />
                     <span style={{ fontSize: '14px', color: '#374151' }}>Enabled</span>
@@ -458,11 +515,7 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
               </div>
               <textarea
                 value={button.prompt}
-                onChange={(e) => {
-                  const newButtons = [...toolbarForm.buttons];
-                  newButtons[index].prompt = e.target.value;
-                  setToolbarForm({ ...toolbarForm, buttons: newButtons });
-                }}
+                onChange={(e) => updateButtonPrompt(index, e.target.value)}
                 onBlur={autoSaveToolbar}
                 placeholder="Enter prompt here. Use {{selectedText}} for selected text and {{context}} for context."
                 rows={3}

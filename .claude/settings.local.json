@@ -9,7 +9,9 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(pnpm run build:chrome:*)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(npm run type-check)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
