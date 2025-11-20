@@ -71,12 +71,10 @@ A smart browser extension that provides AI-powered text processing and enhanceme
 ```json
 [
   {
-    "name": "Developer Tools",
     "pattern": "*.github.com",
     "enabled": true
   },
   {
-    "name": "Documentation Sites",
     "pattern": "*.docs.google.com",
     "enabled": true
   }
@@ -139,7 +137,7 @@ pnpm build:firefox   # Firefox
 - [x] Chrome Extension support
 
 ### Milestone 2: Enhanced Features 🚧
-- [ ] Dynamic option components system
+- [ ] Dynamic option components
 - [ ] Advanced browser automation
 - [ ] Convert chatbox message to toolbar such as grok、gemini、claude.
 - [ ] Convert chatbox message to toolbar

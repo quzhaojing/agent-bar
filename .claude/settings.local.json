@@ -11,7 +11,8 @@
       "Bash(pnpm run build:chrome:*)",
       "Bash(npm run build)",
       "Bash(npm run type-check)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(gh repo view:*)"
     ],
     "deny": [],
     "ask": []
