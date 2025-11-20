@@ -188,7 +188,8 @@ export type MessageType =
   | 'RESULT_PANEL_SHOW'
   | 'RESULT_PANEL_HIDE'
   | 'API_REQUEST'
-  | 'API_RESPONSE';
+  | 'API_RESPONSE'
+  | 'OPEN_OPTIONS';
 
 export interface Message {
   type: MessageType;

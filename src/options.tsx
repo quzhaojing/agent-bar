@@ -1,3 +1,4 @@
+import React from 'react';
 import { useRouter } from './options/router';
 import LLMProviderPage from './options/pages/LLMProviderPage';
 import ToolbarListPage from './options/pages/ToolbarListPage';
@@ -19,6 +20,18 @@ router.addRoute('/toolbar/:id', (props: { params: Record<string, string> }) => (
 
 function OptionsPage() {
   const { currentPath, navigate, getCurrentComponent } = useRouter();
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const result = await chrome.storage.local.get(['agent-bar-options-target']);
+        const target = result['agent-bar-options-target'];
+        if (typeof target === 'string' && target) {
+          navigate(target);
+          await chrome.storage.local.remove(['agent-bar-options-target']);
+        }
+      } catch {}
+    })();
+  }, []);
   const CurrentComponent = getCurrentComponent();
 
   return (

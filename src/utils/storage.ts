@@ -4,11 +4,8 @@ import type { AgentBarConfig, LLMResponse, ToolbarConfig } from '../types';
 const storage = {
   get: async (key: string): Promise<any> => {
     console.log('🔧 Storage: Attempting to get key:', key);
-
-    // Check if we're in a content script and need to use message passing
-    if (typeof window !== 'undefined' && window.location && chrome && chrome.runtime) {
-      try {
-        // Try direct API access first
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
         if (chrome.storage && chrome.storage.local) {
           return new Promise((resolve) => {
             chrome.storage.local.get([key], (result) => {
@@ -18,32 +15,22 @@ const storage = {
             });
           });
         }
-
-        // Fallback to message passing
         const response = await chrome.runtime.sendMessage({
           type: 'GET_STORAGE',
           payload: { key }
         });
-
         console.log('🔧 Storage: Message passing - Value for key', key, ':', response.data);
         return response.data;
-      } catch (error) {
-        console.error('❌ Storage: All access methods failed:', error);
-        return undefined;
       }
+    } catch (error) {
+      console.error('❌ Storage: All access methods failed:', error);
     }
-
-    // Fallback for other contexts
-    console.error('❌ Storage: Chrome storage API not available');
     return undefined;
   },
   set: async (key: string, value: any): Promise<void> => {
     console.log('🔧 Storage: Attempting to set key:', key);
-
-    // Check if we're in a content script and need to use message passing
-    if (typeof window !== 'undefined' && window.location && chrome && chrome.runtime) {
-      try {
-        // Try direct API access first
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
         if (chrome.storage && chrome.storage.local) {
           return new Promise((resolve) => {
             chrome.storage.local.set({ [key]: value }, () => {
@@ -52,31 +39,28 @@ const storage = {
             });
           });
         }
-
-        // Fallback to message passing
         await chrome.runtime.sendMessage({
           type: 'SET_STORAGE',
           payload: { setKey: key, setValue: value }
         });
-
         console.log('🔧 Storage: Message passing - Set key', key, 'successfully');
         return;
-      } catch (error) {
-        console.error('❌ Storage: All set methods failed:', error);
-        return;
       }
+    } catch (error) {
+      console.error('❌ Storage: All set methods failed:', error);
     }
-
-    // Fallback for other contexts
-    console.error('❌ Storage: Chrome storage API not available for setting');
   },
   remove: async (key: string): Promise<void> => {
     return new Promise((resolve) => {
-      chrome.storage.local.remove([key], () => resolve());
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.remove([key], () => resolve());
+      } else {
+        resolve();
+      }
     });
   },
   watch: (callbacks: { [key: string]: (changes: { [key: string]: chrome.storage.StorageChange }) => void }) => {
-    if (chrome.storage.onChanged) {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName === 'local') {
           Object.keys(callbacks).forEach(key => {
@@ -90,9 +74,27 @@ const storage = {
   }
 };
 
+const DEFAULT_TOOLBARS: ToolbarConfig[] = [
+  {
+    buttons: [
+      { enabled: true, id: 'btn-1', prompt: 'Explain this: {{selectedText}}', title: 'Explain' },
+      { enabled: true, id: 'btn-2', prompt: 'Summary this: {{selectedText}}', title: 'Summary' },
+      { enabled: true, id: 'btn-3', prompt: 'Translate this: {{selectedText}}', title: 'Translate' },
+      { enabled: true, id: 'btn-4', prompt: 'Expand this: {{selectedText}}', title: 'Expand' }
+    ],
+    context: '',
+    enabled: true,
+    id: 'toolbar-1763451161658',
+    name: 'Default Toolbar',
+    websitePatterns: [
+      { enabled: true, pattern: '*' }
+    ]
+  }
+];
+
 const DEFAULT_CONFIG: AgentBarConfig = {
   llmProviders: [],
-  toolbarButtons: [],
+  toolbarButtons: DEFAULT_TOOLBARS,
   settings: {
     theme: 'light',
     autoHide: false,

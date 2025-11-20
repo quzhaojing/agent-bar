@@ -412,9 +412,12 @@ const AgentBarApp: React.FC = () => {
     // Implementation would depend on storing the last request
   };
 
-  const handleResultPanelConfigure = () => {
+  const handleResultPanelConfigure = async () => {
     try {
-      chrome.runtime.openOptionsPage();
+      await chrome.runtime.sendMessage({
+        type: 'OPEN_OPTIONS',
+        payload: '/provider'
+      });
     } catch {}
   };
 

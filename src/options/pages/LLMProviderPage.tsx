@@ -215,6 +215,7 @@ export default function LLMProviderPage() {
             <div style={{ minWidth: 0 }}>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Type</label>
               <select
+                aria-label="Provider Type"
                 value={providerForm.type}
                 onChange={(e) => handleProviderTypeChange(e.target.value as any)}
                 style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
@@ -230,6 +231,7 @@ export default function LLMProviderPage() {
             <div style={{ minWidth: 0 }}>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Model</label>
               <select
+                aria-label="Model"
                 value={providerForm.model}
                 onChange={(e) => {
                   autoSaveProvider({ model: e.target.value });
@@ -272,7 +274,7 @@ export default function LLMProviderPage() {
           </div>
 
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Temperature</label>
+            <label className="form-label">Temperature</label>
             <input
               type="number"
               value={providerForm.temperature}

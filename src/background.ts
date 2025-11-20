@@ -8,9 +8,37 @@ import type {
 } from './types';
 
 // Handle messages from content script and popup
+chrome.runtime.onInstalled.addListener(async (details) => {
+  try {
+    if (details && details.reason === 'install') {
+      const result = await chrome.storage.local.get(['agent-bar-config']);
+      const config = result['agent-bar-config'];
+      if (!config || !config.toolbarButtons || config.toolbarButtons.length === 0) {
+        const defaultConfig = await storageManager.getConfig();
+        await chrome.storage.local.set({ 'agent-bar-config': defaultConfig });
+      }
+    }
+  } catch {}
+});
+
 chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendResponse) => {
   try {
     switch (message.type) {
+      case 'OPEN_OPTIONS':
+        try {
+          const target = (message.payload as string) || '/provider';
+          await chrome.storage.local.set({ 'agent-bar-options-target': target });
+          try {
+            await chrome.runtime.openOptionsPage();
+          } catch {
+            const url = chrome.runtime.getURL(`options.html#${target}`);
+            await chrome.tabs.create({ url });
+          }
+          sendResponse({ success: true });
+        } catch (error) {
+          sendResponse({ success: false, error: error instanceof Error ? error.message : 'Failed to open options' });
+        }
+        break;
       case 'GET_CONFIG':
         const config = await storageManager.getConfig();
         sendResponse({ success: true, data: config });
