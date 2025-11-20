@@ -212,12 +212,12 @@ export default function LLMProviderPage() {
       <div style={{ padding: '20px', backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
         <div style={{ marginBottom: '30px', padding: '20px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Type</label>
               <select
                 value={providerForm.type}
                 onChange={(e) => handleProviderTypeChange(e.target.value as any)}
-                style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
               >
                 <option value="openai">OpenAI</option>
                 <option value="claude">Claude (Anthropic)</option>
@@ -227,14 +227,14 @@ export default function LLMProviderPage() {
                 <option value="glm">GLM (Zhipu AI)</option>
               </select>
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>Model</label>
               <select
                 value={providerForm.model}
                 onChange={(e) => {
                   autoSaveProvider({ model: e.target.value });
                 }}
-                style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+                style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
               >
                 {providerModels[providerForm.type].map(model => (
                   <option key={model.value} value={model.value}>
@@ -254,7 +254,7 @@ export default function LLMProviderPage() {
                 autoSaveProvider({ apiKey: e.target.value });
               }}
               placeholder="sk-..."
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+              style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
             />
           </div>
 
@@ -267,7 +267,7 @@ export default function LLMProviderPage() {
                 autoSaveProvider({ baseUrl: e.target.value });
               }}
               placeholder="https://api.openai.com/v1"
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+              style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
             />
           </div>
 
@@ -282,7 +282,7 @@ export default function LLMProviderPage() {
               min="0"
               max="2"
               step="0.1"
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
+              style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '6px' }}
             />
           </div>
         </div>

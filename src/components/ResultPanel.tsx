@@ -25,12 +25,35 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   if (!visible) return null;
 
   const handleCopy = async () => {
+    const text = (content || '').toString();
+    const hasText = text.trim().length > 0;
+    if (!hasText) return;
+
+    let success = false;
     try {
-      await navigator.clipboard.writeText(content);
-      onCopy();
-    } catch (error) {
-      console.error('Failed to copy text:', error);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        success = true;
+      }
+    } catch {}
+
+    if (!success) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+      } catch {}
     }
+
+    if (success) onCopy();
   };
 
   // Prevent clicks inside the panel from bubbling up to document
