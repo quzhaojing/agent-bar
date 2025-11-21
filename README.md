@@ -140,7 +140,6 @@ pnpm build:firefox   # Firefox
 - [ ] Dynamic option components
 - [ ] Advanced browser automation
 - [ ] Convert chatbox message to toolbar such as grok、gemini、claude.
-- [ ] Convert chatbox message to toolbar
 
 
 ### Development Process

@@ -43,6 +43,20 @@
       "activeTab",
       "scripting"
     ],
+    "key": "$CRX_KEY",
+    "web_accessible_resources": [
+      {
+        "resources": [
+          "options.html"
+        ],
+        "matches": [
+          "<all_urls>"
+        ],
+        "extension_ids": [
+          "$CRX_ID"
+        ]
+      }
+    ],
     "icons": {
       "16": "../assets/icon16.png",
       "32": "../assets/icon32.png",
