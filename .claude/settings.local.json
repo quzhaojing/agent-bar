@@ -12,7 +12,13 @@
       "Bash(npm run build)",
       "Bash(npm run type-check)",
       "Bash(find:*)",
-      "Bash(gh repo view:*)"
+      "Bash(gh repo view:*)",
+      "Bash(npm run build:chrome)",
+      "Bash(npm run package)",
+      "Bash(zip:*)",
+      "Bash(powershell:*)",
+      "Bash(node generate-crx.js:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
