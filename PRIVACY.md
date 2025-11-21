@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1faa1dc (Add comprehensive privacy policy for Chrome Web Store compliance)
 # Privacy Policy for Agent Bar
 
 **Last Updated:** November 21, 2025
