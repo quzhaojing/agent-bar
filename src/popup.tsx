@@ -197,6 +197,7 @@ const Popup = () => {
         <a
           href="https://github.com/quzhaojing/agent-bar"
           target="_blank"
+          rel="noopener"
           className="btn btn-text btn-icon"
           title="GitHub"
         >
