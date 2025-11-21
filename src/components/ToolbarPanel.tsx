@@ -71,12 +71,6 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                     )}
                     extraRightControls={null}
                 />
-                {position.direction === 'up' && (
-                    <div className="toolbar-arrow toolbar-arrow-up" />
-                )}
-                {position.direction === 'down' && (
-                    <div className="toolbar-arrow toolbar-arrow-down" />
-                )}
                 {/* Result Panel */}
                 {resultPanelVisible && (
                     <ResultPanel

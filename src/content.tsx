@@ -25,6 +25,7 @@ const AgentBarApp: React.FC = () => {
   const debounceTimerRef = useRef<number | undefined>();
   const containerRef = useRef<HTMLDivElement>(null);
   const dragOffsetRef = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
+  const toolbarHeightRef = useRef<number>(48);
 
   // Initialize
   useEffect(() => {
@@ -201,20 +202,21 @@ const AgentBarApp: React.FC = () => {
   const showToolbar = (text: string, rect: DOMRect) => {
     console.log('🎯 showToolbar called with:', { text, rect });
 
-    const toolbarHeight = 40;
-    const toolbarWidth = 200; // Will be adjusted based on content
     const margin = 10;
-
-    let x = rect.left + rect.width / 2 - toolbarWidth / 2;
-    let y = rect.top;
+    const toolbarWidth = 200;
     let direction: 'up' | 'down' = 'up';
+    let x = rect.left + rect.width / 2 - toolbarWidth / 2;
+    let y = rect.top - toolbarHeightRef.current;
 
     console.log('📍 Initial position:', { x, y, direction });
 
     // Clamp within viewport vertically to avoid going off-screen
     const minY = window.scrollY + margin;
-    const maxY = window.scrollY + window.innerHeight - toolbarHeight - margin;
-    if (y < minY) y = minY;
+    const maxY = window.scrollY + window.innerHeight - toolbarHeightRef.current - margin;
+    if (y < minY) {
+      y = rect.top + margin;
+      direction = 'down';
+    }
     if (y > maxY) y = maxY;
 
     if (x < window.scrollX + margin) {
@@ -230,7 +232,30 @@ const AgentBarApp: React.FC = () => {
     setIsVisible(true);
     setCurrentUrl(window.location.href);
 
-    console.log('✅ Toolbar state updated - should be visible now');
+    // Hide ResultPanel when toolbar is re-shown
+    setResultPanelVisible(false);
+    setResultPanelContent('');
+
+    requestAnimationFrame(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      const containerRect = container.getBoundingClientRect();
+      toolbarHeightRef.current = containerRect.height;
+      const delta = rect.top - containerRect.bottom;
+      if (Math.abs(delta) > 0.5 && direction === 'up') {
+        setPosition(prev => {
+          let newY = prev.y + delta;
+          const minY2 = window.scrollY + margin;
+          const maxY2 = window.scrollY + window.innerHeight - containerRect.height - margin;
+          if (newY < minY2) {
+            newY = rect.top + margin;
+            direction = 'down';
+          }
+          if (newY > maxY2) newY = maxY2;
+          return { ...prev, y: newY, direction };
+        });
+      }
+    });
   };
 
   // Hide toolbar
@@ -312,8 +337,8 @@ const AgentBarApp: React.FC = () => {
     // Don't hide toolbar - keep it visible
     // Show result panel right below toolbar
     const panelX = position.x;
-    const toolbarHeight = 48; // Approximate toolbar height
-    const panelY = position.y + toolbarHeight + 2; // Small gap (2px)
+    const toolbarHeight = 48; // Actual toolbar height
+    const panelY = position.y + toolbarHeight; // Directly below toolbar with no gap
     setResultPanelPosition({ x: panelX, y: panelY });
     setResultPanelVisible(true);
     setResultPanelContent('');
@@ -434,7 +459,7 @@ const AgentBarApp: React.FC = () => {
     const onMove = (ev: MouseEvent) => {
       const margin = 10;
       const toolbarWidth = 200;
-      const toolbarHeight = 40;
+      const toolbarHeight = 48;
       let newX = ev.pageX - dragOffsetRef.current.dx;
       let newY = ev.pageY - dragOffsetRef.current.dy;
 
@@ -524,10 +549,7 @@ const AgentBarApp: React.FC = () => {
           pointerEvents: isVisible || isPinned ? 'auto' : 'none',
         }}
       >
-          <div className={`toolbar-container ${(position.visible || isPinned)
-          ? position.direction === 'up' ? 'visible-up' : 'visible-down'
-          : 'hidden'
-          }`}>
+          <div className={`toolbar-container ${(position.visible || isPinned) ? 'visible-up' : 'hidden'}`}>
             <div className="toolbar-buttons">
               <button
                 className="toolbar-button"
@@ -559,12 +581,6 @@ const AgentBarApp: React.FC = () => {
               })}
               
             </div>
-            {position.direction === 'up' && (
-              <div className="toolbar-arrow toolbar-arrow-up" />
-            )}
-            {position.direction === 'down' && (
-              <div className="toolbar-arrow toolbar-arrow-down" />
-            )}
           {resultPanelVisible && (
             <ResultPanel
               visible={resultPanelVisible}
