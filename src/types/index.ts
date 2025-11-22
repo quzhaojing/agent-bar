@@ -45,6 +45,7 @@ export interface ToolbarButtonConfig {
   id: string;
   prompt: string;
   title: string;
+  dropdowns?: DropdownConfig[];
 }
 
 // Website Pattern interface for toolbar URL matching
@@ -61,6 +62,21 @@ export interface ToolbarConfig {
   id: string;
   name: string;
   websitePatterns: WebsitePattern[];
+}
+
+export interface DropdownOption {
+  id: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+}
+
+export interface DropdownConfig {
+  id: string;
+  name: string;
+  options: DropdownOption[];
+  enabled: boolean;
+  defaultOptionId?: string;
 }
 
 // Export/Import data structure
