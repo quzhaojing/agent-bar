@@ -432,7 +432,7 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
                         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                         maxHeight: '200px',
                         overflowY: 'auto',
-                        zIndex: 10000010,
+                        zIndex: 10000,
                         width: 'max-content',
                         minWidth: '150px'
                     }}

@@ -62,7 +62,7 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                                     position: 'absolute',
                                     bottom: '100%',
                                     left: 0,
-                                    zIndex: 10001,
+                                    zIndex: 9000,
                                 }}
                             >
                                 <TagPanel dropdowns={enabledDropdowns} toolbarId={button.toolbarId} buttonId={button.id} />

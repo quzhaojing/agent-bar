@@ -1,5 +1,5 @@
 import React from 'react';
-import TagPanel from './TagPanel';
+import TagList from './TagList';
 import type { DropdownConfig } from '../types';
 
 interface ResultPanelProps {
@@ -116,7 +116,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
             background: '#f9fafb',
           }}
         >
-          <TagPanel dropdowns={dropdowns.filter(dd => dd && dd.enabled)} toolbarId={toolbarId || ''} buttonId={buttonId || ''} />
+          <TagList dropdowns={dropdowns.filter(dd => dd && dd.enabled)} toolbarId={toolbarId || ''} buttonId={buttonId || ''} />
         </div>
       )}
       <div className="result-panel-content">
