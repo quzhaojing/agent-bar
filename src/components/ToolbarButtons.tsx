@@ -82,7 +82,7 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                                                 ? dd.options.filter((o: any) => o && o.enabled).map((o: any) => o.label || 'Option')
                                                 : []}
                                             showRemoveButton={false}
-                                            isDarkMode={true}
+                                            isDarkMode={false}
                                             openOnHover={true}
                                             direction={'up'}
                                             style={{ pointerEvents: 'auto' }}
