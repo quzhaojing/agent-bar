@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import type { ToolbarButton, ToolbarButtonConfig } from '../types';
+import type { ToolbarButton, ToolbarButtonConfig, DropdownConfig } from '../types';
 import TagSelector from './TagSelector';
 
 interface ToolbarButtonsProps {
-    buttons: (ToolbarButtonConfig & { toolbarId: string; toolbarName: string })[];
+    buttons: ToolbarButtonConfig[];
     loading: boolean;
     onButtonClick: (button: ToolbarButton | ToolbarButtonConfig) => void;
     extraLeftControls?: React.ReactNode;
@@ -25,11 +25,9 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
             {extraLeftControls}
             {buttons.map((btn, index) => {
                 const button = btn as any;
-                const dropdownTags: string[] = (
+                const enabledDropdowns: DropdownConfig[] = (
                     'dropdowns' in button && Array.isArray(button.dropdowns)
-                        ? button.dropdowns
-                            .filter((d: any) => d && d.enabled)
-                            .map((d: any) => d.name || 'Unnamed')
+                        ? button.dropdowns.filter((d: any) => d && d.enabled)
                         : []
                 );
                 return (
@@ -58,25 +56,39 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                             )}
                         </button>
 
-                        {hoveredIndex === index && dropdownTags.length > 0 && (
+                        {hoveredIndex === index && enabledDropdowns.length > 0 && (
                             <div
                                 style={{
                                     position: 'absolute',
                                     bottom: '100%',
                                     left: 0,
                                     zIndex: 10001,
-                                    pointerEvents: 'none'
+                                    pointerEvents: 'none',
+                                    display: 'flex',
+                                    gap: '6px',
+                                    flexWrap: 'wrap'
                                 }}
                             >
-                                <TagSelector
-                                    predefinedTags={dropdownTags}
-                                    placeHolder={"Dropdowns"}
-                                    showRemoveButton={false}
-                                    isDarkMode={true}
-                                    openOnHover={true}
-                                    direction={'up'}
-                                    style={{ pointerEvents: 'auto' }}
-                                />
+                                {enabledDropdowns.map((dd: DropdownConfig, ddi: number) => {
+                                    const defaultOptionLabel = dd.defaultOptionId && Array.isArray(dd.options)
+                                        ? (dd.options.find((o: any) => o && o.id === dd.defaultOptionId)?.label || '')
+                                        : '';
+                                    return (
+                                        <TagSelector
+                                            key={dd.id || ddi}
+                                            defaultValue={defaultOptionLabel}
+                                            placeHolder={dd.name || 'Dropdown'}
+                                            predefinedTags={Array.isArray(dd.options)
+                                                ? dd.options.filter((o: any) => o && o.enabled).map((o: any) => o.label || 'Option')
+                                                : []}
+                                            showRemoveButton={false}
+                                            isDarkMode={true}
+                                            openOnHover={true}
+                                            direction={'up'}
+                                            style={{ pointerEvents: 'auto' }}
+                                        />
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
