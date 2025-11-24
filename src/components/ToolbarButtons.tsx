@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ToolbarButton, ToolbarButtonConfig } from '../types';
+import TagSelector from './TagSelector';
 
 interface ToolbarButtonsProps {
     buttons: (ToolbarButtonConfig & { toolbarId: string; toolbarName: string })[];
@@ -17,32 +18,68 @@ const hasEnabledDropdowns = (button: any): boolean => {
 };
 
 const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onButtonClick, extraLeftControls, extraRightControls }) => {
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     console.log("ToolbarButtons rendering. Buttons count:", buttons.length);
     return (
         <div className="toolbar-buttons">
             {extraLeftControls}
             {buttons.map((btn, index) => {
                 const button = btn as any;
+                const dropdownTags: string[] = (
+                    'dropdowns' in button && Array.isArray(button.dropdowns)
+                        ? button.dropdowns
+                            .filter((d: any) => d && d.enabled)
+                            .map((d: any) => d.name || 'Unnamed')
+                        : []
+                );
                 return (
-                    <button
+                    <div
                         key={`${'toolbarId' in button ? button.toolbarId : 'legacy'}-${button.id}`}
-                        className="toolbar-button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => onButtonClick(button)}
-                        disabled={loading}
-                        title={'toolbarName' in button ? `${button.toolbarName}: ${button.title}` : button.name}
-                        style={{
-                            animationDelay: `${index * 50}ms`,
-                        }}
+                        style={{ position: 'relative', display: 'inline-block' }}
+                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseLeave={() => setHoveredIndex((prev) => (prev === index ? null : prev))}
                     >
-                        {'icon' in button && button.icon && (
-                            <span className="button-icon">{button.icon}</span>
+                        <button
+                            className="toolbar-button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => onButtonClick(button)}
+                            disabled={loading}
+                            title={'toolbarName' in button ? `${button.toolbarName}: ${button.title}` : button.name}
+                            style={{
+                                animationDelay: `${index * 50}ms`,
+                            }}
+                        >
+                            {'icon' in button && button.icon && (
+                                <span className="button-icon">{button.icon}</span>
+                            )}
+                            <span className="button-text">{'title' in button ? button.title : button.name}</span>
+                            {hasEnabledDropdowns(button) && (
+                                <span className="dropdown-indicator-badge" />
+                            )}
+                        </button>
+
+                        {hoveredIndex === index && dropdownTags.length > 0 && (
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    bottom: '100%',
+                                    left: 0,
+                                    zIndex: 10001,
+                                    pointerEvents: 'none'
+                                }}
+                            >
+                                <TagSelector
+                                    predefinedTags={dropdownTags}
+                                    placeHolder={"Dropdowns"}
+                                    showRemoveButton={false}
+                                    isDarkMode={true}
+                                    openOnHover={true}
+                                    direction={'up'}
+                                    style={{ pointerEvents: 'auto' }}
+                                />
+                            </div>
                         )}
-                        <span className="button-text">{'title' in button ? button.title : button.name}</span>
-                        {hasEnabledDropdowns(button) && (
-                            <span className="dropdown-indicator-badge" />
-                        )}
-                    </button>
+                    </div>
                 );
             })}
             {extraRightControls}

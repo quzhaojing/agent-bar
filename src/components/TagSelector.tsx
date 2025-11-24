@@ -10,6 +10,8 @@ interface TagSelectorProps {
     onTagClear?: (previousTag: string | null) => void;
     style?: React.CSSProperties;
     isDarkMode?: boolean;
+    openOnHover?: boolean;
+    direction?: 'up' | 'down';
 }
 
 interface TagSelectorRef {
@@ -182,7 +184,7 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
     const toggleDropdown = () => {
         if (!isOpen) {
             // Detect direction before opening dropdown
-            const direction = checkDropdownDirection();
+            const direction = props.direction ?? checkDropdownDirection();
             setDropdownDirection(direction);
         }
         setIsOpen(!isOpen);
@@ -375,6 +377,18 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
                     e.stopPropagation()
                 }
             }
+            onMouseEnter={() => {
+                if (props.openOnHover) {
+                    const direction = props.direction ?? checkDropdownDirection();
+                    setDropdownDirection(direction);
+                    setIsOpen(true);
+                }
+            }}
+            onMouseLeave={() => {
+                if (props.openOnHover) {
+                    setIsOpen(false);
+                }
+            }}
         >
             <div
                 className="tag-display"
@@ -433,4 +447,3 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
 TagSelector.displayName = 'TagSelector';
 
 export default TagSelector;
-
