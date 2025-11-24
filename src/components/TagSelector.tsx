@@ -26,8 +26,8 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
     placeHolder = 'No tag selected',
     predefinedTags = [],
     showRemoveButton = true,
-    onTagSelect = () => {},
-    onTagClear = () => {},
+    onTagSelect = () => { },
+    onTagClear = () => { },
     isDarkMode = true,
     ...props
 }, ref) => {
@@ -130,7 +130,10 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
             }
         };
 
-        const handleScrollOrResize = () => {
+        const handleScrollOrResize = (e: Event) => {
+            if (containerRef.current && e.target instanceof Node && containerRef.current.contains(e.target)) {
+                return;
+            }
             setIsOpen(false);
         };
 
@@ -337,11 +340,11 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
                     e.stopPropagation()
                 }}
                 onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-                     (e.target as HTMLDivElement).style.background = isDarkMode ? 'rgba(102, 126, 234, 0.1)' : 'rgba(102, 126, 234, 0.05)';
-                 }}
-                 onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
-                     (e.target as HTMLDivElement).style.background = 'transparent';
-                 }}
+                    (e.target as HTMLDivElement).style.background = isDarkMode ? 'rgba(102, 126, 234, 0.1)' : 'rgba(102, 126, 234, 0.05)';
+                }}
+                onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
+                    (e.target as HTMLDivElement).style.background = 'transparent';
+                }}
                 style={{
                     padding: '10px 12px',
                     cursor: 'pointer',
@@ -366,6 +369,7 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
             className="tag-selector"
             style={{
                 position: 'relative',
+                zIndex: isOpen ? 10002 : 'auto',
                 display: 'inline-block',
                 width: 'auto',
                 minWidth: 'auto',
@@ -374,8 +378,8 @@ const TagSelector = React.forwardRef<TagSelectorRef, TagSelectorProps>(({
                 ...props.style
             }}
             onClick={(e) => {
-                    e.stopPropagation()
-                }
+                e.stopPropagation()
+            }
             }
             onMouseEnter={() => {
                 if (props.openOnHover) {

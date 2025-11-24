@@ -24,10 +24,16 @@ const TagPanel: React.FC<TagPanelProps> = ({ dropdowns, style, toolbarId, button
         flexWrap: 'wrap',
         pointerEvents: 'auto',
         position: 'relative',
+        minWidth: '300px',
         ...style,
       }}
     >
-      <TagList dropdowns={dropdowns} toolbarId={toolbarId} buttonId={buttonId} />
+      <TagList
+        dropdowns={dropdowns}
+        toolbarId={toolbarId}
+        buttonId={buttonId}
+        style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}
+      />
       <div
         style={{
           position: 'absolute',
