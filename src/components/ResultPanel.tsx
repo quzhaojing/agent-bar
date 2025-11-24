@@ -1,4 +1,6 @@
 import React from 'react';
+import TagPanel from './TagPanel';
+import type { DropdownConfig } from '../types';
 
 interface ResultPanelProps {
   visible: boolean;
@@ -10,6 +12,9 @@ interface ResultPanelProps {
   onRetry: () => void;
   onConfigure?: () => void;
   showConfigure?: boolean;
+  dropdowns?: DropdownConfig[];
+  toolbarId?: string;
+  buttonId?: string;
 }
 
 const ResultPanel: React.FC<ResultPanelProps> = ({
@@ -21,6 +26,9 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
   onRetry,
   onConfigure,
   showConfigure,
+  dropdowns,
+  toolbarId,
+  buttonId,
 }) => {
   if (!visible) return null;
 
@@ -97,6 +105,20 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
       onMouseDown={handlePanelClick}
       style={panelStyle}
     >
+      {Array.isArray(dropdowns) && dropdowns.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center',
+            padding: '8px',
+            borderBottom: '1px solid #e1e5e9',
+            background: '#f9fafb',
+          }}
+        >
+          <TagPanel dropdowns={dropdowns.filter(dd => dd && dd.enabled)} toolbarId={toolbarId || ''} buttonId={buttonId || ''} />
+        </div>
+      )}
       <div className="result-panel-content">
         {loading ? (
           <div className="loading-content">

@@ -1,6 +1,6 @@
 import React from 'react';
 import ResultPanel from './ResultPanel';
-import type { ToolbarPosition, ToolbarButton, ToolbarButtonConfig } from '../types';
+import type { ToolbarPosition, ToolbarButton, ToolbarButtonConfig, DropdownConfig } from '../types';
 import ToolbarButtons from './ToolbarButtons';
 
 interface ToolbarPanelProps {
@@ -18,6 +18,9 @@ interface ToolbarPanelProps {
     onDragStart?: (e: React.MouseEvent) => void;
     onResultPanelConfigure?: () => void;
     resultPanelShowConfigure?: boolean;
+    panelDropdowns?: DropdownConfig[] | null;
+    panelToolbarId?: string | null;
+    panelButtonId?: string | null;
 }
 
 const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
@@ -35,6 +38,9 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
     onResultPanelConfigure,
     onDragStart,
     resultPanelShowConfigure,
+    panelDropdowns,
+    panelToolbarId,
+    panelButtonId,
 }) => {
     if (!position.visible && !resultPanelVisible) return null;
 
@@ -89,6 +95,9 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                         onRetry={onResultPanelRetry}
                         onConfigure={onResultPanelConfigure}
                         showConfigure={resultPanelShowConfigure}
+                        dropdowns={panelDropdowns || undefined}
+                        toolbarId={panelToolbarId || undefined}
+                        buttonId={panelButtonId || undefined}
                     />
                 )}
             </div>

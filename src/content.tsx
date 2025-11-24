@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { storageManager } from './utils/storage';
 import { urlMatcher } from './utils/urlMatcher';
 import ToolbarPanel from './components/ToolbarPanel';
-import type { ToolbarPosition, ToolbarButton, ToolbarConfig, ToolbarButtonConfig } from './types';
+import type { ToolbarPosition, ToolbarButton, ToolbarConfig, ToolbarButtonConfig, DropdownConfig } from './types';
 import './style.css';
 
 const AgentBarApp: React.FC = () => {
@@ -21,6 +21,9 @@ const AgentBarApp: React.FC = () => {
   const [resultPanelContent, setResultPanelContent] = useState('');
   const [resultPanelPosition, setResultPanelPosition] = useState({ x: 0, y: 0 });
   const [resultPanelShowConfigure, setResultPanelShowConfigure] = useState(false);
+  const [panelDropdowns, setPanelDropdowns] = useState<DropdownConfig[] | null>(null);
+  const [panelToolbarId, setPanelToolbarId] = useState<string | null>(null);
+  const [panelButtonId, setPanelButtonId] = useState<string | null>(null);
 
   const debounceTimerRef = useRef<number | undefined>();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -344,6 +347,22 @@ const AgentBarApp: React.FC = () => {
     setResultPanelContent('');
     setLoading(true);
 
+    if ('id' in button) {
+      const dropdowns: DropdownConfig[] | null = 'dropdowns' in button && Array.isArray((button as ToolbarButtonConfig).dropdowns)
+        ? (button as ToolbarButtonConfig).dropdowns as DropdownConfig[]
+        : null;
+      setPanelDropdowns(dropdowns);
+      // Pass toolbar id if available via augmented buttons list
+      // When calling, button may be of type ToolbarButtonConfig & { toolbarId: string }
+      const btnAny: any = button;
+      setPanelToolbarId(typeof btnAny.toolbarId === 'string' ? btnAny.toolbarId : null);
+      setPanelButtonId(button.id);
+    } else {
+      setPanelDropdowns(null);
+      setPanelToolbarId(null);
+      setPanelButtonId(null);
+    }
+
     try {
       // Get LLM provider
       const providers = await storageManager.getLLMProviders();
@@ -549,6 +568,9 @@ const AgentBarApp: React.FC = () => {
       onDragStart={handleDragStart}
       onResultPanelConfigure={handleResultPanelConfigure}
       resultPanelShowConfigure={resultPanelShowConfigure}
+      panelDropdowns={panelDropdowns}
+      panelToolbarId={panelToolbarId}
+      panelButtonId={panelButtonId}
     />
   );
 };
