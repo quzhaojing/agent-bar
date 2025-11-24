@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { ToolbarButton, ToolbarButtonConfig, DropdownConfig } from '../types';
-import TagSelector from './TagSelector';
+import TagPanel from './TagPanel';
 
 interface ToolbarButtonsProps {
     buttons: ToolbarButtonConfig[];
@@ -63,32 +63,9 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                                     bottom: '100%',
                                     left: 0,
                                     zIndex: 10001,
-                                    pointerEvents: 'none',
-                                    display: 'flex',
-                                    gap: '6px',
-                                    flexWrap: 'wrap'
                                 }}
                             >
-                                {enabledDropdowns.map((dd: DropdownConfig, ddi: number) => {
-                                    const defaultOptionLabel = dd.defaultOptionId && Array.isArray(dd.options)
-                                        ? (dd.options.find((o: any) => o && o.id === dd.defaultOptionId)?.label || '')
-                                        : '';
-                                    return (
-                                        <TagSelector
-                                            key={dd.id || ddi}
-                                            defaultValue={defaultOptionLabel}
-                                            placeHolder={dd.name || 'Dropdown'}
-                                            predefinedTags={Array.isArray(dd.options)
-                                                ? dd.options.filter((o: any) => o && o.enabled).map((o: any) => o.label || 'Option')
-                                                : []}
-                                            showRemoveButton={false}
-                                            isDarkMode={false}
-                                            openOnHover={true}
-                                            direction={'up'}
-                                            style={{ pointerEvents: 'auto' }}
-                                        />
-                                    );
-                                })}
+                                <TagPanel dropdowns={enabledDropdowns} />
                             </div>
                         )}
                     </div>
