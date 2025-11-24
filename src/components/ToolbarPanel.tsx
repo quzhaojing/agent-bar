@@ -16,6 +16,8 @@ interface ToolbarPanelProps {
     onResultPanelCopy: () => void;
     onResultPanelRetry: () => void;
     onDragStart?: (e: React.MouseEvent) => void;
+    onResultPanelConfigure?: () => void;
+    resultPanelShowConfigure?: boolean;
 }
 
 const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
@@ -30,6 +32,9 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
     onResultPanelClose,
     onResultPanelCopy,
     onResultPanelRetry,
+    onResultPanelConfigure,
+    onDragStart,
+    resultPanelShowConfigure,
 }) => {
     if (!position.visible && !resultPanelVisible) return null;
 
@@ -65,6 +70,7 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                             className="toolbar-button"
                             onMouseDown={(e) => {
                                 e.preventDefault();
+                                if (onDragStart) onDragStart(e);
                             }}
                             title="Drag"
                         >⠿</button>
@@ -81,6 +87,8 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                         onClose={onResultPanelClose}
                         onCopy={onResultPanelCopy}
                         onRetry={onResultPanelRetry}
+                        onConfigure={onResultPanelConfigure}
+                        showConfigure={resultPanelShowConfigure}
                     />
                 )}
             </div>

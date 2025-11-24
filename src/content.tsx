@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import React, { useEffect, useState, useRef } from 'react';
 import { storageManager } from './utils/storage';
 import { urlMatcher } from './utils/urlMatcher';
-import ResultPanel from './components/ResultPanel';
+import ToolbarPanel from './components/ToolbarPanel';
 import type { ToolbarPosition, ToolbarButton, ToolbarConfig, ToolbarButtonConfig } from './types';
 import './style.css';
 
@@ -531,73 +531,26 @@ const AgentBarApp: React.FC = () => {
 
   console.log('✅ Rendering toolbar with buttons:', displayButtons.length);
 
+  const panelPosition: ToolbarPosition = { ...position, visible: position.visible || isPinned };
+
   return (
-    <>
-      <div
-        ref={containerRef}
-        className="agent-bar-toolbar"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        style={{
-          position: 'absolute',
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          zIndex: 10000,
-          pointerEvents: isVisible || isPinned ? 'auto' : 'none',
-        }}
-      >
-          <div className={`toolbar-container ${(position.visible || isPinned) ? 'visible-up' : 'hidden'}`}>
-            <div className="toolbar-buttons">
-              <button
-                className="toolbar-button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleDragStart(e);
-                }}
-                title="Drag"
-              >⠿</button>
-              {displayButtons.map((button, index) => {
-                console.log(`🔘 Rendering button ${index}:`, button);
-                return (
-                  <button
-                    key={`${'toolbarId' in button ? button.toolbarId : 'legacy'}-${button.id}`}
-                    className="toolbar-button"
-                    onClick={() => handleButtonClick(button)}
-                    disabled={loading}
-                    title={'toolbarName' in button ? `${button.toolbarName}: ${button.title}` : button.name}
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                    }}
-                  >
-                    {'icon' in button && button.icon && (
-                      <span className="button-icon">{button.icon}</span>
-                    )}
-                    <span className="button-text">{'title' in button ? button.title : button.name}</span>
-                  </button>
-                );
-              })}
-              
-            </div>
-          {resultPanelVisible && (
-            <ResultPanel
-              visible={resultPanelVisible}
-              content={resultPanelContent}
-              loading={loading}
-              position={resultPanelPosition}
-              onClose={handleResultPanelClose}
-              onCopy={handleResultPanelCopy}
-              onRetry={handleResultPanelRetry}
-              onConfigure={handleResultPanelConfigure}
-              showConfigure={resultPanelShowConfigure}
-            />
-          )}
-          </div>
-        </div>
-      </>
-    );
+    <ToolbarPanel
+      containerRef={containerRef}
+      position={panelPosition}
+      buttons={displayButtons}
+      loading={loading}
+      onButtonClick={handleButtonClick}
+      resultPanelVisible={resultPanelVisible}
+      resultPanelContent={resultPanelContent}
+      resultPanelPosition={resultPanelPosition}
+      onResultPanelClose={handleResultPanelClose}
+      onResultPanelCopy={handleResultPanelCopy}
+      onResultPanelRetry={handleResultPanelRetry}
+      onDragStart={handleDragStart}
+      onResultPanelConfigure={handleResultPanelConfigure}
+      resultPanelShowConfigure={resultPanelShowConfigure}
+    />
+  );
 };
 
 // Create container and render the app
