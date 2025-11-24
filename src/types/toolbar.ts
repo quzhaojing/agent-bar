@@ -10,6 +10,7 @@ export interface ToolbarButton {
   id: string;
   prompt: string;
   title: string;
+  dropdowns?: Dropdown[];
 }
 
 // Complete toolbar configuration
@@ -20,6 +21,21 @@ export interface Toolbar {
   id: string;
   name: string;
   websitePatterns: WebsitePattern[];
+}
+
+export interface DropdownOption {
+  id: string;
+  label: string;
+  description: string;
+  enabled: boolean;
+}
+
+export interface Dropdown {
+  id: string;
+  name: string;
+  options: DropdownOption[];
+  enabled: boolean;
+  defaultOptionId?: string;
 }
 
 // Export/Import data structure

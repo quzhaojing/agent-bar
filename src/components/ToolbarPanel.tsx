@@ -1,6 +1,6 @@
 import React from 'react';
 import ResultPanel from './ResultPanel';
-import type { ToolbarPosition, ToolbarButton, ToolbarButtonConfig } from '../types';
+import type { ToolbarPosition, ToolbarButton, ToolbarButtonConfig, DropdownConfig } from '../types';
 import ToolbarButtons from './ToolbarButtons';
 
 interface ToolbarPanelProps {
@@ -16,6 +16,11 @@ interface ToolbarPanelProps {
     onResultPanelCopy: () => void;
     onResultPanelRetry: () => void;
     onDragStart?: (e: React.MouseEvent) => void;
+    onResultPanelConfigure?: () => void;
+    resultPanelShowConfigure?: boolean;
+    panelDropdowns?: DropdownConfig[] | null;
+    panelToolbarId?: string | null;
+    panelButtonId?: string | null;
 }
 
 const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
@@ -30,6 +35,12 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
     onResultPanelClose,
     onResultPanelCopy,
     onResultPanelRetry,
+    onResultPanelConfigure,
+    onDragStart,
+    resultPanelShowConfigure,
+    panelDropdowns,
+    panelToolbarId,
+    panelButtonId,
 }) => {
     if (!position.visible && !resultPanelVisible) return null;
 
@@ -46,7 +57,7 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                 position: 'absolute',
                 left: `${position.x}px`,
                 top: `${position.y}px`,
-                zIndex: 10000,
+                zIndex: 8000,
                 pointerEvents: position.visible || resultPanelVisible ? 'auto' : 'none',
             }}
         >
@@ -65,6 +76,7 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                             className="toolbar-button"
                             onMouseDown={(e) => {
                                 e.preventDefault();
+                                if (onDragStart) onDragStart(e);
                             }}
                             title="Drag"
                         >⠿</button>
@@ -81,6 +93,11 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                         onClose={onResultPanelClose}
                         onCopy={onResultPanelCopy}
                         onRetry={onResultPanelRetry}
+                        onConfigure={onResultPanelConfigure}
+                        showConfigure={resultPanelShowConfigure}
+                        dropdowns={panelDropdowns || undefined}
+                        toolbarId={panelToolbarId || undefined}
+                        buttonId={panelButtonId || undefined}
                     />
                 )}
             </div>

@@ -2,8 +2,8 @@ import { createRoot } from 'react-dom/client';
 import React, { useEffect, useState, useRef } from 'react';
 import { storageManager } from './utils/storage';
 import { urlMatcher } from './utils/urlMatcher';
-import ResultPanel from './components/ResultPanel';
-import type { ToolbarPosition, ToolbarButton, ToolbarConfig, ToolbarButtonConfig } from './types';
+import ToolbarPanel from './components/ToolbarPanel';
+import type { ToolbarPosition, ToolbarButton, ToolbarConfig, ToolbarButtonConfig, DropdownConfig } from './types';
 import './style.css';
 
 const AgentBarApp: React.FC = () => {
@@ -21,6 +21,9 @@ const AgentBarApp: React.FC = () => {
   const [resultPanelContent, setResultPanelContent] = useState('');
   const [resultPanelPosition, setResultPanelPosition] = useState({ x: 0, y: 0 });
   const [resultPanelShowConfigure, setResultPanelShowConfigure] = useState(false);
+  const [panelDropdowns, setPanelDropdowns] = useState<DropdownConfig[] | null>(null);
+  const [panelToolbarId, setPanelToolbarId] = useState<string | null>(null);
+  const [panelButtonId, setPanelButtonId] = useState<string | null>(null);
 
   const debounceTimerRef = useRef<number | undefined>();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -344,6 +347,22 @@ const AgentBarApp: React.FC = () => {
     setResultPanelContent('');
     setLoading(true);
 
+    if ('id' in button) {
+      const dropdowns: DropdownConfig[] | null = 'dropdowns' in button && Array.isArray((button as ToolbarButtonConfig).dropdowns)
+        ? (button as ToolbarButtonConfig).dropdowns as DropdownConfig[]
+        : null;
+      setPanelDropdowns(dropdowns);
+      // Pass toolbar id if available via augmented buttons list
+      // When calling, button may be of type ToolbarButtonConfig & { toolbarId: string }
+      const btnAny: any = button;
+      setPanelToolbarId(typeof btnAny.toolbarId === 'string' ? btnAny.toolbarId : null);
+      setPanelButtonId(button.id);
+    } else {
+      setPanelDropdowns(null);
+      setPanelToolbarId(null);
+      setPanelButtonId(null);
+    }
+
     try {
       // Get LLM provider
       const providers = await storageManager.getLLMProviders();
@@ -531,73 +550,29 @@ const AgentBarApp: React.FC = () => {
 
   console.log('✅ Rendering toolbar with buttons:', displayButtons.length);
 
+  const panelPosition: ToolbarPosition = { ...position, visible: position.visible || isPinned };
+
   return (
-    <>
-      <div
-        ref={containerRef}
-        className="agent-bar-toolbar"
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-        style={{
-          position: 'absolute',
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          zIndex: 10000,
-          pointerEvents: isVisible || isPinned ? 'auto' : 'none',
-        }}
-      >
-          <div className={`toolbar-container ${(position.visible || isPinned) ? 'visible-up' : 'hidden'}`}>
-            <div className="toolbar-buttons">
-              <button
-                className="toolbar-button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleDragStart(e);
-                }}
-                title="Drag"
-              >⠿</button>
-              {displayButtons.map((button, index) => {
-                console.log(`🔘 Rendering button ${index}:`, button);
-                return (
-                  <button
-                    key={`${'toolbarId' in button ? button.toolbarId : 'legacy'}-${button.id}`}
-                    className="toolbar-button"
-                    onClick={() => handleButtonClick(button)}
-                    disabled={loading}
-                    title={'toolbarName' in button ? `${button.toolbarName}: ${button.title}` : button.name}
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                    }}
-                  >
-                    {'icon' in button && button.icon && (
-                      <span className="button-icon">{button.icon}</span>
-                    )}
-                    <span className="button-text">{'title' in button ? button.title : button.name}</span>
-                  </button>
-                );
-              })}
-              
-            </div>
-          {resultPanelVisible && (
-            <ResultPanel
-              visible={resultPanelVisible}
-              content={resultPanelContent}
-              loading={loading}
-              position={resultPanelPosition}
-              onClose={handleResultPanelClose}
-              onCopy={handleResultPanelCopy}
-              onRetry={handleResultPanelRetry}
-              onConfigure={handleResultPanelConfigure}
-              showConfigure={resultPanelShowConfigure}
-            />
-          )}
-          </div>
-        </div>
-      </>
-    );
+    <ToolbarPanel
+      containerRef={containerRef}
+      position={panelPosition}
+      buttons={displayButtons}
+      loading={loading}
+      onButtonClick={handleButtonClick}
+      resultPanelVisible={resultPanelVisible}
+      resultPanelContent={resultPanelContent}
+      resultPanelPosition={resultPanelPosition}
+      onResultPanelClose={handleResultPanelClose}
+      onResultPanelCopy={handleResultPanelCopy}
+      onResultPanelRetry={handleResultPanelRetry}
+      onDragStart={handleDragStart}
+      onResultPanelConfigure={handleResultPanelConfigure}
+      resultPanelShowConfigure={resultPanelShowConfigure}
+      panelDropdowns={panelDropdowns}
+      panelToolbarId={panelToolbarId}
+      panelButtonId={panelButtonId}
+    />
+  );
 };
 
 // Create container and render the app
