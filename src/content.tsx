@@ -31,6 +31,7 @@ const AgentBarApp: React.FC = () => {
   const dragOffsetRef = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
   const toolbarHeightRef = useRef<number>(48);
   const keepAliveRef = useRef<{ port?: any; timer?: number }>({});
+  const lastButtonRef = useRef<ToolbarButton | ToolbarButtonConfig | null>(null);
 
   // Initialize
   useEffect(() => {
@@ -305,6 +306,7 @@ const AgentBarApp: React.FC = () => {
 
   // Handle button click
   const handleButtonClick = async (button: ToolbarButton | ToolbarButtonConfig) => {
+    lastButtonRef.current = button;
     if (!selectedText) return;
 
     // Don't hide toolbar - keep it visible
@@ -459,10 +461,9 @@ const AgentBarApp: React.FC = () => {
 
   // Handle result panel retry
   const handleResultPanelRetry = async () => {
-    // This would retry the last request
-    // For now, just show a placeholder
-    setResultPanelContent('Retrying...');
-    // Implementation would depend on storing the last request
+    const last = lastButtonRef.current;
+    if (!last) return;
+    await handleButtonClick(last);
   };
 
   const handleResultPanelConfigure = async () => {

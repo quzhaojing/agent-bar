@@ -14,7 +14,7 @@ function bindTools(model: any) {
 async function callLlm(modelWithTools: any, messages: BaseMessage[]) {
   return modelWithTools.invoke([
     new SystemMessage(
-      "你是网页智能助手。你可以使用内置浏览器工具执行页面操作；当任务是纯文本处理（如翻译、改写、总结、解释等）时，请不要调用任何工具，直接以纯文本回答。仅在确需页面交互时调用工具。不要使用固定JSON格式输出，保持自然的纯文本回答；如果进行了工具操作，请在最终回答中简要给出结论。"
+      "You are a web assistant. You can use built-in browser tools to interact with pages. When the task is pure text processing (e.g., translation, rewriting, summarization, explanation), do not call any tools — respond in plain text. Only call tools when page interaction is required. Do not use rigid JSON output; keep natural plain-text responses. If tools were used, provide a brief conclusion in the final answer."
     ),
     ...messages
   ])
