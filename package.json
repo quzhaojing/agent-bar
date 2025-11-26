@@ -20,9 +20,17 @@
   "dependencies": {
     "@iconify/react": "^6.0.2",
     "@plasmohq/storage": "^1.10.0",
+    "@types/uuid": "^11.0.0",
+    "@langchain/core": "^0.3.7",
+    "@langchain/langgraph": "^0.2.30",
+    "@langchain/openai": "^0.3.4",
+    "@langchain/anthropic": "^0.2.4",
+    "@langchain/google-genai": "^0.1.4",
+    "zod": "^3.23.8",
     "plasmo": "^0.88.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "uuid": "^13.0.0",
     "zustand": "^4.4.6"
   },
   "devDependencies": {
