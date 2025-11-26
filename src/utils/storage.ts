@@ -5,49 +5,59 @@ const storage = {
   get: async (key: string): Promise<any> => {
     console.log('🔧 Storage: Attempting to get key:', key);
     try {
-      if (typeof chrome !== 'undefined' && chrome.runtime) {
-        if (chrome.storage && chrome.storage.local) {
-          return new Promise((resolve) => {
+      if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
+        console.warn('🔧 Storage: chrome.runtime not available');
+        return undefined;
+      }
+      if (chrome.storage && chrome.storage.local) {
+        return await new Promise((resolve, reject) => {
+          try {
             chrome.storage.local.get([key], (result) => {
+              const err = chrome.runtime.lastError
+              if (err) {
+                reject(err)
+                return
+              }
               console.log('🔧 Storage: Direct access - Raw result for key', key, ':', result);
-              console.log('🔧 Storage: Direct access - Value for key', key, ':', result[key]);
               resolve(result[key]);
             });
-          });
-        }
-        const response = await chrome.runtime.sendMessage({
-          type: 'GET_STORAGE',
-          payload: { key }
+          } catch (e) {
+            reject(e)
+          }
         });
-        console.log('🔧 Storage: Message passing - Value for key', key, ':', response.data);
-        return response.data;
       }
     } catch (error) {
-      console.error('❌ Storage: All access methods failed:', error);
+      console.error('❌ Storage: Direct access failed:', error);
     }
     return undefined;
   },
   set: async (key: string, value: any): Promise<void> => {
     console.log('🔧 Storage: Attempting to set key:', key);
     try {
-      if (typeof chrome !== 'undefined' && chrome.runtime) {
-        if (chrome.storage && chrome.storage.local) {
-          return new Promise((resolve) => {
-            chrome.storage.local.set({ [key]: value }, () => {
-              console.log('🔧 Storage: Direct access - Set key', key, 'successfully');
-              resolve();
-            });
-          });
-        }
-        await chrome.runtime.sendMessage({
-          type: 'SET_STORAGE',
-          payload: { setKey: key, setValue: value }
-        });
-        console.log('🔧 Storage: Message passing - Set key', key, 'successfully');
+      if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
+        console.warn('🔧 Storage: chrome.runtime not available for set');
         return;
       }
+      if (chrome.storage && chrome.storage.local) {
+        await new Promise((resolve, reject) => {
+          try {
+            chrome.storage.local.set({ [key]: value }, () => {
+              const err = chrome.runtime.lastError
+              if (err) {
+                reject(err)
+                return
+              }
+              console.log('🔧 Storage: Direct access - Set key', key, 'successfully');
+              resolve(undefined);
+            });
+          } catch (e) {
+            reject(e)
+          }
+        })
+        return
+      }
     } catch (error) {
-      console.error('❌ Storage: All set methods failed:', error);
+      console.error('❌ Storage: Direct set failed:', error);
     }
   },
   remove: async (key: string): Promise<void> => {
