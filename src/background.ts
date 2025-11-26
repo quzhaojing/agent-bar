@@ -68,8 +68,16 @@ chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendRespo
           sendResponse({ success: false, error: 'No LLM provider configured or enabled' });
           break;
         }
-        const finalPrompt = apiRequest.prompt.replace('{{selectedText}}', apiRequest.selectedText);
-        console.log('🧪 Agent request', { prompt: finalPrompt, provider: apiRequest.provider });
+        let finalPrompt = apiRequest.prompt.replace('{{selectedText}}', apiRequest.selectedText);
+        if (apiRequest.dropdownVars && typeof apiRequest.dropdownVars === 'object') {
+          for (const [name, payload] of Object.entries(apiRequest.dropdownVars)) {
+            const label = payload?.label || '';
+            const desc = payload?.description || '';
+            finalPrompt = finalPrompt.split(`{{${name}}}`).join(label);
+            finalPrompt = finalPrompt.split(`{{${name}_description}}`).join(desc);
+          }
+        }
+        console.log('🧪 Agent request', { prompt: finalPrompt, provider: apiRequest.provider, dropdownVars: apiRequest.dropdownVars });
         const agentResult = await executeBrowserAgent(finalPrompt, apiRequest.provider, { debug: true });
         console.log('🧪 Agent result', { status: agentResult.status, steps: agentResult.steps?.length, model: agentResult.model });
         const apiResponse: APIResponse = agentResult.status === 'ok'
