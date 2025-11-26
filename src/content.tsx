@@ -206,7 +206,7 @@ const AgentBarApp: React.FC = () => {
     console.log('🎯 showToolbar called with:', { text, rect });
 
     const margin = 10;
-    const toolbarWidth = 200;
+    const toolbarWidth = 300;
     let direction: 'up' | 'down' = 'up';
     let x = rect.left + rect.width / 2 - toolbarWidth / 2;
     let y = rect.top - toolbarHeightRef.current;
@@ -477,7 +477,7 @@ const AgentBarApp: React.FC = () => {
 
     const onMove = (ev: MouseEvent) => {
       const margin = 10;
-      const toolbarWidth = 200;
+      const toolbarWidth = 300;
       const toolbarHeight = 48;
       let newX = ev.pageX - dragOffsetRef.current.dx;
       let newY = ev.pageY - dragOffsetRef.current.dy;
@@ -590,7 +590,7 @@ const createAppContainer = () => {
   container.style.width = '100%';
   container.style.height = '100%';
   container.style.pointerEvents = 'none';
-  container.style.zIndex = '9999';
+  container.style.zIndex = '2147483647';
 
   document.body.appendChild(container);
 
