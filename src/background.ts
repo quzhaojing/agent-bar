@@ -69,7 +69,9 @@ chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendRespo
           break;
         }
         const finalPrompt = apiRequest.prompt.replace('{{selectedText}}', apiRequest.selectedText);
-        const agentResult = await executeBrowserAgent(finalPrompt, apiRequest.provider);
+        console.log('🧪 Agent request', { prompt: finalPrompt, provider: apiRequest.provider });
+        const agentResult = await executeBrowserAgent(finalPrompt, apiRequest.provider, { debug: true });
+        console.log('🧪 Agent result', { status: agentResult.status, steps: agentResult.steps?.length, model: agentResult.model });
         const apiResponse: APIResponse = agentResult.status === 'ok'
           ? { success: true, data: JSON.stringify(agentResult) }
           : { success: false, error: 'Agent execution failed', data: JSON.stringify(agentResult) };

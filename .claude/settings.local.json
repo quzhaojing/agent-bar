@@ -18,7 +18,8 @@
       "Bash(zip:*)",
       "Bash(powershell:*)",
       "Bash(node generate-crx.js:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(pnpm add:*)"
     ],
     "deny": [],
     "ask": []
