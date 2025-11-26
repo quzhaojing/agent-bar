@@ -413,8 +413,8 @@ const AgentBarApp: React.FC = () => {
       }
       setResultPanelShowConfigure(false);
 
-      const prompt = ('promptTemplate' in button ? button.promptTemplate : button.prompt)
-        .replace('{{selectedText}}', selectedText);
+      const promptTemplate = ('promptTemplate' in button ? button.promptTemplate : button.prompt);
+      let prompt = promptTemplate.replace('{{selectedText}}', selectedText);
 
       let dropdownVars: Record<string, { label: string; description?: string }> | undefined = undefined;
       if (panelDropdowns && panelToolbarId && panelButtonId) {
@@ -428,7 +428,11 @@ const AgentBarApp: React.FC = () => {
               resolve(undefined);
             }
           });
-          const label: string | undefined = value && typeof value === 'object' ? value.label : undefined;
+          let label: string | undefined = value && typeof value === 'object' ? value.label : undefined;
+          if (!label && dd.defaultOptionId && Array.isArray(dd.options)) {
+            const def = dd.options.find((o: any) => o && o.id === dd.defaultOptionId);
+            label = def && typeof def.label === 'string' ? def.label : label;
+          }
           let description: string | undefined = undefined;
           if (label && Array.isArray(dd.options)) {
             const opt: any = dd.options.find((o: any) => o && o.label === label);
@@ -441,6 +445,14 @@ const AgentBarApp: React.FC = () => {
           if (name && payload) map[name] = payload;
         }
         dropdownVars = Object.keys(map).length ? map : undefined;
+        if (dropdownVars) {
+          for (const [name, payload] of Object.entries(dropdownVars)) {
+            if (name && payload?.label) {
+              const re = new RegExp(`\\{\\{${name}\\}\\}`, 'g');
+              prompt = prompt.replace(re, payload.label);
+            }
+          }
+        }
       }
 
       const apiRequest = {
