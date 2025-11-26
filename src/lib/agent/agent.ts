@@ -79,11 +79,14 @@ export async function executeBrowserAgent(prompt: string, provider: LLMProvider,
     try {
       const parsed = JSON.parse(last.text || "{}")
       dbg("final-json", parsed)
-      return { status: parsed.status || "ok", data: parsed.data, steps, model: { provider: provider.type, model: provider.model } }
+      const normalized = typeof parsed === "string" ? { text: parsed } : parsed
+      const status = (typeof normalized === "object" && (normalized as any).status) || "ok"
+      const data = (typeof normalized === "object" && (normalized as any).data) ? (normalized as any).data : normalized
+      return { status, data, steps, model: { provider: provider.type, model: provider.model } }
     } catch {
       const data = { text: last.text }
       dbg("final-text", data)
-      return { status: "ok", data, steps, model: { provider: provider.type, model: provider.model } }
+      return { status: "ok", data: data, steps, model: { provider: provider.type, model: provider.model } }
     }
   }
   dbg("final-error")

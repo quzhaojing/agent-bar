@@ -11,7 +11,6 @@ interface ToolbarButtonsProps {
 }
 
 const hasEnabledDropdowns = (button: any): boolean => {
-    console.log("=====button:", button);
     return 'dropdowns' in button &&
         Array.isArray(button.dropdowns) &&
         button.dropdowns.some((dropdown: any) => dropdown.enabled);
@@ -20,7 +19,6 @@ const hasEnabledDropdowns = (button: any): boolean => {
 const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onButtonClick, extraLeftControls, extraRightControls }) => {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-    console.log("ToolbarButtons rendering. Buttons count:", buttons.length);
     return (
         <div className="toolbar-buttons">
             {extraLeftControls}
@@ -31,7 +29,6 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                         ? button.dropdowns.filter((d: any) => d && d.enabled)
                         : []
                 );
-                console.log("Enabled dropdowns for button:", enabledDropdowns);
                 return (
                     <div
                         key={`${'toolbarId' in button ? button.toolbarId : 'legacy'}-${button.id}`}

@@ -5,6 +5,7 @@ import { urlMatcher } from './utils/urlMatcher';
 import ToolbarPanel from './components/ToolbarPanel';
 import type { ToolbarPosition, ToolbarButton, ToolbarConfig, ToolbarButtonConfig, DropdownConfig } from './types';
 import './style.css';
+import { ping, openOptions as openOptionsMsg, getStorage, apiRequest as apiRequestMsg } from './utils/messaging';
 
 const AgentBarApp: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -35,44 +36,18 @@ const AgentBarApp: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        console.log('🚀 Agent Bar initializing...');
-
         // Set current URL first
         const currentUrl = window.location.href;
         setCurrentUrl(currentUrl);
-        console.log('🌍 Current URL set:', currentUrl);
 
         // Try to load actual config (but don't fail if it errors)
-        console.log('📖 Attempting to load config...');
         const config = await storageManager.getConfig();
-        console.log('📋 Config loaded:', config);
 
-        console.log("config toolbarButtons", config.toolbarButtons);
         setToolbars(config.toolbarButtons);
 
         // Set up event listeners
         setupEventListeners();
-        console.log('👂 Event listeners set up');
-
-        console.log('✅ Agent Bar initialized successfully');
-
-        try {
-          console.log('📡 Sending PING to background...')
-          const pong = await chrome.runtime.sendMessage({ type: 'PING', payload: { ts: Date.now() } })
-          console.log('📡 PING response:', pong)
-        } catch (e) {
-          console.warn('❌ PING failed:', e)
-        }
-
-        try {
-          if (!keepAliveRef.current.port) {
-            const port = chrome.runtime.connect({ name: 'agent-bar-keeper' });
-            keepAliveRef.current.port = port;
-            keepAliveRef.current.timer = window.setInterval(() => {
-              try { port.postMessage({ type: 'KEEP_ALIVE', ts: Date.now() }); } catch {}
-            }, 20000);
-          }
-        } catch {}
+        await ping();
       } catch (error) {
         console.error('❌ Error initializing Agent Bar:', error);
       }
@@ -93,11 +68,6 @@ const AgentBarApp: React.FC = () => {
 
   // Set up event listeners
   const setupEventListeners = () => {
-    console.log('👂 Setting up event listeners...');
-
-    // Test if the handler function exists
-    console.log('🧪 Testing handleTextSelection function:', typeof handleTextSelection);
-
     // Text selection event - use both mouseup and select events
     document.addEventListener('mouseup', (e) => {
       // Ignore if clicking inside toolbar or result panel
@@ -107,20 +77,15 @@ const AgentBarApp: React.FC = () => {
       const isInsideResultPanel = targetElement.closest && targetElement.closest('.agent-bar-result-panel');
 
       if (isInsideToolbar || isInsideResultPanel) {
-        console.log('🖱️ Click inside toolbar/panel, ignoring');
         return;
       }
-
-      console.log('🖱️ Mouseup event fired', e);
       handleTextSelection();
     }, true);
 
-    document.addEventListener('selectstart', (e) => {
-      console.log('📝 Select start event fired', e);
+    document.addEventListener('selectstart', (_e) => {
     }, true);
 
     document.addEventListener('selectionchange', (_e) => {
-      console.log('🔄 Selection change event fired');
       handleTextSelection();
     });
 
@@ -136,42 +101,31 @@ const AgentBarApp: React.FC = () => {
         return;
       }
 
-      console.log('⌨️ Keyup event fired', e);
       handleTextSelection();
     }, true);
 
-    console.log('🖱️ Text selection events added');
 
     // Hide toolbar when clicking outside
     document.addEventListener('click', handleClickOutside);
-    console.log('🖱️ Click outside event added');
 
     // Hide toolbar on scroll
     document.addEventListener('scroll', handleScroll);
-    console.log('📜 Scroll event added');
 
     // Watch for URL changes (for SPA)
     watchUrlChanges();
-    console.log('🔄 URL change watcher added');
 
-    // Test event listeners
-    console.log('🧪 Testing event listeners - try clicking anywhere or selecting text');
   };
 
   // Handle text selection
   const handleTextSelection = async () => {
     const selection = window.getSelection();
-    console.log('📝 Selection:', selection);
 
     if (!selection || selection.isCollapsed) {
-      console.log('❌ No valid selection or collapsed selection');
-
       // Don't hide if user is interacting with the toolbar/panel
       const isHoveringToolbar = containerRef.current?.matches(':hover');
       const isHoveringPanel = document.querySelector('.agent-bar-result-panel:hover');
 
       if (isHoveringToolbar || isHoveringPanel) {
-        console.log('🛑 Selection collapsed but hovering toolbar/panel, ignoring hide');
         return;
       }
 
@@ -182,38 +136,30 @@ const AgentBarApp: React.FC = () => {
     }
 
     const selectedText = selection.toString().trim();
-    console.log('📄 Selected text:', `"${selectedText}"`);
 
     if (!selectedText || selectedText.length < 1) {
-      console.log('❌ Empty or too short selection');
       hideToolbar();
       return;
     }
 
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
-    console.log('📐 Selection rect:', rect);
 
     let hasMatchingItems = false;
 
-    console.log('🔄 Using new structure - checking toolbars');
 
     // Always get fresh toolbars data to avoid async state issues
     const freshToolbars = await storageManager.getToolbars();
-    console.log('🔄 Fresh toolbars from storage:', freshToolbars);
 
     // Update state with fresh data
     setToolbars(freshToolbars);
 
     // Check if current URL has matching toolbars
     const matchingToolbars = urlMatcher.getToolbarsForUrl(window.location.href, freshToolbars);
-    console.log('🎪 Matching toolbars:', matchingToolbars);
     hasMatchingItems = matchingToolbars.length > 0;
 
-    console.log('🎯 Has matching items:', hasMatchingItems);
 
     if (!hasMatchingItems) {
-      console.log('❌ No matching items, hiding toolbar');
       hideToolbar();
       return;
     }
@@ -223,16 +169,13 @@ const AgentBarApp: React.FC = () => {
       clearTimeout(debounceTimerRef.current);
     }
 
-    console.log('⏰ Scheduling toolbar show with 300ms debounce');
     debounceTimerRef.current = setTimeout(() => {
-      console.log('🎉 Showing toolbar');
       showToolbar(selectedText, rect);
     }, 300);
   };
 
   // Show toolbar
   const showToolbar = (text: string, rect: DOMRect) => {
-    console.log('🎯 showToolbar called with:', { text, rect });
 
     const margin = 10;
     const toolbarWidth = 300;
@@ -240,7 +183,6 @@ const AgentBarApp: React.FC = () => {
     let x = rect.left + rect.width / 2 - toolbarWidth / 2;
     let y = rect.top - toolbarHeightRef.current;
 
-    console.log('📍 Initial position:', { x, y, direction });
 
     // Clamp within viewport vertically to avoid going off-screen
     const minY = window.scrollY + margin;
@@ -257,7 +199,6 @@ const AgentBarApp: React.FC = () => {
       x = window.scrollX + window.innerWidth - toolbarWidth - margin;
     }
 
-    console.log('📍 Final position:', { x, y, direction });
 
     setSelectedText(text);
     setPosition({ x, y, visible: true, direction });
@@ -376,20 +317,28 @@ const AgentBarApp: React.FC = () => {
     setResultPanelContent('');
     setLoading(true);
 
+    let dropdownsPayload: DropdownConfig[] | null = null;
+    let toolbarIdPayload: string | null = null;
+    let buttonIdPayload: string | null = null;
     if ('id' in button) {
       const dropdowns: DropdownConfig[] | null = 'dropdowns' in button && Array.isArray((button as ToolbarButtonConfig).dropdowns)
         ? (button as ToolbarButtonConfig).dropdowns as DropdownConfig[]
         : null;
       setPanelDropdowns(dropdowns);
-      // Pass toolbar id if available via augmented buttons list
-      // When calling, button may be of type ToolbarButtonConfig & { toolbarId: string }
       const btnAny: any = button;
-      setPanelToolbarId(typeof btnAny.toolbarId === 'string' ? btnAny.toolbarId : null);
+      const tId = typeof btnAny.toolbarId === 'string' ? btnAny.toolbarId : null;
+      setPanelToolbarId(tId);
       setPanelButtonId(button.id);
+      dropdownsPayload = dropdowns;
+      toolbarIdPayload = tId;
+      buttonIdPayload = button.id;
     } else {
       setPanelDropdowns(null);
       setPanelToolbarId(null);
       setPanelButtonId(null);
+      dropdownsPayload = null;
+      toolbarIdPayload = null;
+      buttonIdPayload = null;
     }
 
     try {
@@ -417,17 +366,11 @@ const AgentBarApp: React.FC = () => {
       let prompt = promptTemplate.replace('{{selectedText}}', selectedText);
 
       let dropdownVars: Record<string, { label: string; description?: string }> | undefined = undefined;
-      if (panelDropdowns && panelToolbarId && panelButtonId) {
+      if (dropdownsPayload && toolbarIdPayload && buttonIdPayload) {
         const host = (typeof window !== 'undefined' && window.location) ? window.location.host : 'unknown-host';
-        const entries = await Promise.all(panelDropdowns.map(async (dd) => {
-          const key = `agent-bar-selection:${host}:${panelToolbarId}:${panelButtonId}:${dd.id}`;
-          const value = await new Promise<any>((resolve) => {
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-              chrome.storage.local.get([key], (result) => resolve(result[key]));
-            } else {
-              resolve(undefined);
-            }
-          });
+        const entries = await Promise.all(dropdownsPayload.map(async (dd) => {
+          const key = `agent-bar-selection:${host}:${toolbarIdPayload}:${buttonIdPayload}:${dd.id}`;
+          const value = await getStorage(key);
           let label: string | undefined = value && typeof value === 'object' ? value.label : undefined;
           if (!label && dd.defaultOptionId && Array.isArray(dd.options)) {
             const def = dd.options.find((o: any) => o && o.id === dd.defaultOptionId);
@@ -445,6 +388,7 @@ const AgentBarApp: React.FC = () => {
           if (name && payload) map[name] = payload;
         }
         dropdownVars = Object.keys(map).length ? map : undefined;
+        console.log('dropdownVars:', dropdownVars);
         if (dropdownVars) {
           for (const [name, payload] of Object.entries(dropdownVars)) {
             if (name && payload?.label) {
@@ -463,12 +407,7 @@ const AgentBarApp: React.FC = () => {
       };
 
       // Send request to background script
-      console.log('🧪 Sending API_REQUEST', apiRequest);
-      const response = await chrome.runtime.sendMessage({
-        type: 'API_REQUEST',
-        payload: apiRequest,
-      });
-      console.log('🧪 Received API_RESPONSE', response);
+      const response = await apiRequestMsg(apiRequest);
 
       if (response.success && response.data) {
         setResultPanelContent(response.data);
@@ -528,10 +467,11 @@ const AgentBarApp: React.FC = () => {
 
   const handleResultPanelConfigure = async () => {
     try {
-      await chrome.runtime.sendMessage({
-        type: 'OPEN_OPTIONS',
-        payload: '/provider'
-      });
+      const ok = await openOptionsMsg('/provider');
+      if (!ok) {
+        setResultPanelContent('Extension context unavailable. Open options page from Extensions → Agent Bar.');
+        setResultPanelShowConfigure(false);
+      }
     } catch {}
   };
 
@@ -576,23 +516,18 @@ const AgentBarApp: React.FC = () => {
 
   // Get buttons to display for current URL
   const displayButtons = React.useMemo(() => {
-    console.log('🔄 Computing displayButtons...', { isVisible, currentUrl });
 
     if (!isVisible || !currentUrl) {
-      console.log('❌ Not visible or no URL');
       return [];
     }
 
     let result: any[] = [];
 
-    console.log('🎪 Using new structure', toolbars);
     // Get matching toolbars and flatten their buttons
     const matchingToolbars = urlMatcher.getToolbarsForUrl(currentUrl, toolbars);
-    console.log('🎪 Matching toolbars:', matchingToolbars);
     const allButtons: (ToolbarButtonConfig & { toolbarId: string; toolbarName: string })[] = [];
 
     matchingToolbars.forEach(toolbar => {
-      console.log(`🛠️ Processing toolbar: ${toolbar.name}`);
       toolbar.buttons.forEach(button => {
         if (button.enabled) {
           allButtons.push({
@@ -607,18 +542,14 @@ const AgentBarApp: React.FC = () => {
     result = allButtons;
 
 
-    console.log('📊 Final displayButtons result:', result);
     return result;
   }, [isVisible, currentUrl, toolbars]);
 
-  console.log('🎨 Rendering check:', { isVisible, displayButtonsLength: displayButtons.length, isPinned });
 
   if (!isPinned && (!isVisible || displayButtons.length === 0)) {
-    console.log('❌ Not rendering toolbar - conditions not met', { isVisible, displayButtonsLength: displayButtons.length });
     return null;
   }
 
-  console.log('✅ Rendering toolbar with buttons:', displayButtons.length);
 
   const panelPosition: ToolbarPosition = { ...position, visible: position.visible || isPinned };
 

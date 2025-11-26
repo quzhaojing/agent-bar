@@ -1,12 +1,16 @@
 import type { AgentBarConfig, LLMResponse, ToolbarConfig } from '../types';
 
-// Use Chrome storage API directly for content script compatibility
+const hasRuntime = () => typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
+let runtimeWarned = false;
+
 const storage = {
   get: async (key: string): Promise<any> => {
-    console.log('🔧 Storage: Attempting to get key:', key);
     try {
-      if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
-        console.warn('🔧 Storage: chrome.runtime not available');
+      if (!hasRuntime()) {
+        if (!runtimeWarned) {
+          try { console.warn('🔧 Storage: chrome.runtime not available'); } catch {}
+          runtimeWarned = true;
+        }
         return undefined;
       }
       if (chrome.storage && chrome.storage.local) {
@@ -18,7 +22,6 @@ const storage = {
                 reject(err)
                 return
               }
-              console.log('🔧 Storage: Direct access - Raw result for key', key, ':', result);
               resolve(result[key]);
             });
           } catch (e) {
@@ -32,10 +35,12 @@ const storage = {
     return undefined;
   },
   set: async (key: string, value: any): Promise<void> => {
-    console.log('🔧 Storage: Attempting to set key:', key);
     try {
-      if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.id) {
-        console.warn('🔧 Storage: chrome.runtime not available for set');
+      if (!hasRuntime()) {
+        if (!runtimeWarned) {
+          try { console.warn('🔧 Storage: chrome.runtime not available for set'); } catch {}
+          runtimeWarned = true;
+        }
         return;
       }
       if (chrome.storage && chrome.storage.local) {
@@ -47,7 +52,6 @@ const storage = {
                 reject(err)
                 return
               }
-              console.log('🔧 Storage: Direct access - Set key', key, 'successfully');
               resolve(undefined);
             });
           } catch (e) {
@@ -62,7 +66,7 @@ const storage = {
   },
   remove: async (key: string): Promise<void> => {
     return new Promise((resolve) => {
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      if (hasRuntime() && chrome.storage && chrome.storage.local) {
         chrome.storage.local.remove([key], () => resolve());
       } else {
         resolve();
@@ -70,7 +74,7 @@ const storage = {
     });
   },
   watch: (callbacks: { [key: string]: (changes: { [key: string]: chrome.storage.StorageChange }) => void }) => {
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+    if (hasRuntime() && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName === 'local') {
           Object.keys(callbacks).forEach(key => {
@@ -121,20 +125,15 @@ class StorageManager {
   // Get configuration
   async getConfig(): Promise<AgentBarConfig> {
     try {
-      console.log('🔍 Storage: Getting config...');
-      const config = await storage.get('agent-bar-config');
-      console.log('🔍 Storage: Raw config:', config);
+      const config = hasRuntime() ? await storage.get('agent-bar-config') : undefined;
 
       if (!config) {
-        console.log('🔍 Storage: No config found, using defaults');
         return DEFAULT_CONFIG;
       }
 
-      console.log('🔍 Storage: Using loaded config');
       return { ...DEFAULT_CONFIG, ...config };
     } catch (error) {
       console.error('❌ Storage: Error getting config:', error);
-      console.log('🔍 Storage: Falling back to defaults');
       return DEFAULT_CONFIG;
     }
   }

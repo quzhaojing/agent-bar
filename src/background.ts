@@ -79,16 +79,21 @@ chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendRespo
         }
         console.log('🧪 Agent request', { prompt: finalPrompt, provider: apiRequest.provider, dropdownVars: apiRequest.dropdownVars });
         const agentResult = await executeBrowserAgent(finalPrompt, apiRequest.provider, { debug: true });
-        console.log('🧪 Agent result', { status: agentResult.status, steps: agentResult.steps?.length, model: agentResult.model });
+        const text = typeof (agentResult as any).data === 'string'
+          ? (agentResult as any).data
+          : ((agentResult as any).data && typeof (agentResult as any).data === 'object' && 'text' in (agentResult as any).data
+            ? (agentResult as any).data.text
+            : String((agentResult as any).data ?? ''));
         const apiResponse: APIResponse = agentResult.status === 'ok'
-          ? { success: true, data: JSON.stringify(agentResult) }
-          : { success: false, error: 'Agent execution failed', data: JSON.stringify(agentResult) };
+          ? { success: true, data: text }
+          : { success: false, error: 'Agent execution failed' };
+        console.log('🧪 Agent result', { status: agentResult.status, steps: agentResult.steps?.length, model: agentResult.model, text });
 
         // Save to history if successful
-        if (apiResponse.success && apiResponse.data && apiRequest.provider) {
+        if (apiResponse.success && apiRequest.provider) {
           const llmResponse: LLMResponse = {
             id: `response-${Date.now()}`,
-            content: apiResponse.data,
+            content: text,
             provider: apiRequest.provider.name,
             model: apiRequest.provider.model,
             prompt: apiRequest.prompt.replace('{{selectedText}}', apiRequest.selectedText),
