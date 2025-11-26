@@ -32,6 +32,8 @@ const AgentBarApp: React.FC = () => {
   const toolbarHeightRef = useRef<number>(48);
   const keepAliveRef = useRef<{ port?: any; timer?: number }>({});
   const lastButtonRef = useRef<ToolbarButton | ToolbarButtonConfig | null>(null);
+  const markerRef = useRef<HTMLDivElement | null>(null);
+  const lastSelectionRef = useRef<{ text: string; rect: { left: number; top: number; right: number; bottom: number; width: number; height: number } } | null>(null);
 
   // Initialize
   useEffect(() => {
@@ -76,8 +78,9 @@ const AgentBarApp: React.FC = () => {
       const targetElement = target as Element;
       const isInsideToolbar = containerRef.current && containerRef.current.contains(target);
       const isInsideResultPanel = targetElement.closest && targetElement.closest('.agent-bar-result-panel');
+      const isInsideMarker = markerRef.current && markerRef.current.contains(target as Node);
 
-      if (isInsideToolbar || isInsideResultPanel) {
+      if (isInsideToolbar || isInsideResultPanel || isInsideMarker) {
         return;
       }
       handleTextSelection();
@@ -97,8 +100,9 @@ const AgentBarApp: React.FC = () => {
       const targetElement = target as Element;
       const isInsideToolbar = containerRef.current && containerRef.current.contains(target);
       const isInsideResultPanel = targetElement.closest && targetElement.closest('.agent-bar-result-panel');
+      const isInsideMarker = markerRef.current && markerRef.current.contains(target as Node);
 
-      if (isInsideToolbar || isInsideResultPanel) {
+      if (isInsideToolbar || isInsideResultPanel || isInsideMarker) {
         return;
       }
 
@@ -133,6 +137,7 @@ const AgentBarApp: React.FC = () => {
       if (!isPinned) {
         hideToolbar();
       }
+      removeSelectionMarker();
       return;
     }
 
@@ -140,6 +145,7 @@ const AgentBarApp: React.FC = () => {
 
     if (!selectedText || selectedText.length < 1) {
       hideToolbar();
+      removeSelectionMarker();
       return;
     }
 
@@ -165,14 +171,64 @@ const AgentBarApp: React.FC = () => {
       return;
     }
 
-    // Show toolbar with debounce
+    // Place selection marker with debounce
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      showToolbar(selectedText, rect);
+      placeSelectionMarker(selectedText, rect);
     }, 300);
+  };
+
+  const placeSelectionMarker = (text: string, rect: DOMRect) => {
+    lastSelectionRef.current = {
+      text,
+      rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }
+    };
+    const margin = 6;
+    const size = 18;
+    const vpRight = window.innerWidth;
+    const vpBottom = window.innerHeight;
+    let left = rect.right + margin;
+    let top = rect.bottom - size / 2;
+    if (left + size + margin > vpRight) left = rect.left - size - margin;
+    if (top + size + margin > vpBottom) top = vpBottom - size - margin;
+    if (top < margin) top = margin;
+
+    if (!markerRef.current) {
+      const m = document.createElement('div');
+      m.className = 'agent-bar-selection-marker';
+      m.style.cssText = `position:fixed; width:${size}px; height:${size}px; border-radius:50%; background:#2563eb; box-shadow:0 2px 6px rgba(0,0,0,0.2); border:2px solid #fff; z-index:2147483646; cursor:pointer; pointer-events:auto;`;
+      m.addEventListener('mouseenter', () => {
+        const sel = lastSelectionRef.current;
+        if (!sel) return;
+        const mr = m.getBoundingClientRect();
+        const fakeRect = {
+          left: mr.left,
+          top: mr.top,
+          right: mr.right,
+          bottom: mr.bottom,
+          width: mr.width,
+          height: mr.height
+        } as DOMRect as any;
+        showToolbar(sel.text, fakeRect);
+      });
+      markerRef.current = m;
+      document.body.appendChild(m);
+    }
+
+    markerRef.current.style.left = `${left}px`;
+    markerRef.current.style.top = `${top}px`;
+  };
+
+  const removeSelectionMarker = () => {
+    const m = markerRef.current;
+    if (m && m.parentNode) {
+      try { m.parentNode.removeChild(m); } catch {}
+    }
+    markerRef.current = null;
+    lastSelectionRef.current = null;
   };
 
   // Show toolbar
@@ -237,6 +293,7 @@ const AgentBarApp: React.FC = () => {
     setIsVisible(false);
     setPosition(prev => ({ ...prev, visible: false }));
     setSelectedText('');
+    removeSelectionMarker();
   };
 
   // Handle click outside
@@ -247,9 +304,10 @@ const AgentBarApp: React.FC = () => {
     // Check if click is inside toolbar or result panel
     const isInsideToolbar = containerRef.current && containerRef.current.contains(target);
     const isInsideResultPanel = targetElement.closest('.agent-bar-result-panel');
+    const isInsideMarker = markerRef.current && markerRef.current.contains(target);
 
     // Only hide if click is outside both toolbar and result panel
-    if (!isInsideToolbar && !isInsideResultPanel) {
+    if (!isInsideToolbar && !isInsideResultPanel && !isInsideMarker) {
       if (!isPinned) {
         hideToolbar();
       }
@@ -269,6 +327,7 @@ const AgentBarApp: React.FC = () => {
     if (resultPanelVisible) {
       handleResultPanelClose();
     }
+    removeSelectionMarker();
   };
 
   // Watch for URL changes (SPA navigation)
