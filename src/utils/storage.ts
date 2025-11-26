@@ -1,58 +1,72 @@
 import type { AgentBarConfig, LLMResponse, ToolbarConfig } from '../types';
 
-// Use Chrome storage API directly for content script compatibility
+const hasRuntime = () => typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
+let runtimeWarned = false;
+
 const storage = {
   get: async (key: string): Promise<any> => {
-    console.log('🔧 Storage: Attempting to get key:', key);
     try {
-      if (typeof chrome !== 'undefined' && chrome.runtime) {
-        if (chrome.storage && chrome.storage.local) {
-          return new Promise((resolve) => {
+      if (!hasRuntime()) {
+        if (!runtimeWarned) {
+          try { console.warn('🔧 Storage: chrome.runtime not available'); } catch {}
+          runtimeWarned = true;
+        }
+        return undefined;
+      }
+      if (chrome.storage && chrome.storage.local) {
+        return await new Promise((resolve, reject) => {
+          try {
             chrome.storage.local.get([key], (result) => {
-              console.log('🔧 Storage: Direct access - Raw result for key', key, ':', result);
-              console.log('🔧 Storage: Direct access - Value for key', key, ':', result[key]);
+              const err = chrome.runtime.lastError
+              if (err) {
+                reject(err)
+                return
+              }
               resolve(result[key]);
             });
-          });
-        }
-        const response = await chrome.runtime.sendMessage({
-          type: 'GET_STORAGE',
-          payload: { key }
+          } catch (e) {
+            reject(e)
+          }
         });
-        console.log('🔧 Storage: Message passing - Value for key', key, ':', response.data);
-        return response.data;
       }
     } catch (error) {
-      console.error('❌ Storage: All access methods failed:', error);
+      console.error('❌ Storage: Direct access failed:', error);
     }
     return undefined;
   },
   set: async (key: string, value: any): Promise<void> => {
-    console.log('🔧 Storage: Attempting to set key:', key);
     try {
-      if (typeof chrome !== 'undefined' && chrome.runtime) {
-        if (chrome.storage && chrome.storage.local) {
-          return new Promise((resolve) => {
-            chrome.storage.local.set({ [key]: value }, () => {
-              console.log('🔧 Storage: Direct access - Set key', key, 'successfully');
-              resolve();
-            });
-          });
+      if (!hasRuntime()) {
+        if (!runtimeWarned) {
+          try { console.warn('🔧 Storage: chrome.runtime not available for set'); } catch {}
+          runtimeWarned = true;
         }
-        await chrome.runtime.sendMessage({
-          type: 'SET_STORAGE',
-          payload: { setKey: key, setValue: value }
-        });
-        console.log('🔧 Storage: Message passing - Set key', key, 'successfully');
         return;
       }
+      if (chrome.storage && chrome.storage.local) {
+        await new Promise((resolve, reject) => {
+          try {
+            chrome.storage.local.set({ [key]: value }, () => {
+              const err = chrome.runtime.lastError
+              if (err) {
+                reject(err)
+                return
+              }
+              resolve(undefined);
+            });
+          } catch (e) {
+            reject(e)
+          }
+        })
+        return
+      }
     } catch (error) {
-      console.error('❌ Storage: All set methods failed:', error);
+      console.error('❌ Storage: Direct set failed:', error);
     }
   },
   remove: async (key: string): Promise<void> => {
     return new Promise((resolve) => {
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      if (hasRuntime() && chrome.storage && chrome.storage.local) {
         chrome.storage.local.remove([key], () => resolve());
       } else {
         resolve();
@@ -60,7 +74,7 @@ const storage = {
     });
   },
   watch: (callbacks: { [key: string]: (changes: { [key: string]: chrome.storage.StorageChange }) => void }) => {
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+    if (hasRuntime() && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName === 'local') {
           Object.keys(callbacks).forEach(key => {
@@ -111,20 +125,15 @@ class StorageManager {
   // Get configuration
   async getConfig(): Promise<AgentBarConfig> {
     try {
-      console.log('🔍 Storage: Getting config...');
-      const config = await storage.get('agent-bar-config');
-      console.log('🔍 Storage: Raw config:', config);
+      const config = hasRuntime() ? await storage.get('agent-bar-config') : undefined;
 
       if (!config) {
-        console.log('🔍 Storage: No config found, using defaults');
         return DEFAULT_CONFIG;
       }
 
-      console.log('🔍 Storage: Using loaded config');
       return { ...DEFAULT_CONFIG, ...config };
     } catch (error) {
       console.error('❌ Storage: Error getting config:', error);
-      console.log('🔍 Storage: Falling back to defaults');
       return DEFAULT_CONFIG;
     }
   }

@@ -182,6 +182,7 @@ export interface APIRequest {
   provider: LLMProvider;
   prompt: string;
   selectedText: string;
+  dropdownVars?: Record<string, { label: string; description?: string }>;
 }
 
 export interface APIResponse {
@@ -205,7 +206,8 @@ export type MessageType =
   | 'RESULT_PANEL_HIDE'
   | 'API_REQUEST'
   | 'API_RESPONSE'
-  | 'OPEN_OPTIONS';
+  | 'OPEN_OPTIONS'
+  | 'PING';
 
 export interface Message {
   type: MessageType;

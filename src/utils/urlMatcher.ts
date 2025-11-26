@@ -169,48 +169,37 @@ class URLMatcher {
 
   // Get matching rules for a URL
   getMatchingRules(url: string, rules: UrlRule[]): UrlRule[] {
-    console.log('🔍 URL Matcher: getMatchingRules called with:', { url, rulesCount: rules.length });
     const matchingRules = rules.filter(rule => {
-      console.log('🔍 URL Matcher: Testing rule:', rule.id, rule.pattern, 'enabled:', rule.enabled);
       const matches = rule.enabled && this.testRule(url, rule);
-      console.log('🔍 URL Matcher: Rule', rule.id, 'matches:', matches);
       return matches;
     });
-    console.log('🔍 URL Matcher: Final matching rules:', matchingRules.map(r => r.id));
     return matchingRules;
   }
 
   // Get toolbar buttons for a URL based on rules (legacy support)
   getToolbarButtonsForUrl(url: string, rules: UrlRule[], allButtons: any[]): any[] {
-    console.log('🔍 URL Matcher: getToolbarButtonsForUrl called with:', { url, rulesCount: rules.length, buttonsCount: allButtons.length });
     const matchingRules = this.getMatchingRules(url, rules);
     const matchingRuleIds = new Set(matchingRules.map(rule => rule.id));
 
-    console.log('🔍 URL Matcher: Matching rule IDs:', Array.from(matchingRuleIds));
 
     const result = allButtons.filter(button => {
-      console.log('🔍 URL Matcher: Testing button:', button.id, button.enabled, button.urlRuleIds);
       if (!button.enabled) return false;
 
       // If button has no specific rule associations, show it
       if (!button.urlRuleIds || button.urlRuleIds.length === 0) {
-        console.log('🔍 URL Matcher: Button', button.id, 'has no URL rule associations, showing');
         return true;
       }
 
       // Check if button is associated with any matching rule
       const matches = button.urlRuleIds.some((ruleId: string) => matchingRuleIds.has(ruleId));
-      console.log('🔍 URL Matcher: Button', button.id, 'rule IDs', button.urlRuleIds, 'matches:', matches);
       return matches;
     });
 
-    console.log('🔍 URL Matcher: Final matching buttons:', result.map(b => b.id));
     return result;
   }
 
   // Get toolbars for a URL based on new configuration structure
   getToolbarsForUrl(url: string, toolbars: ToolbarConfig[]): ToolbarConfig[] {
-    console.log("toolbars:", url, toolbars)
     return toolbars.filter(toolbar => {
       if (!toolbar.enabled) return false;
 

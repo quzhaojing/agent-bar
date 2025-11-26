@@ -1,10 +1,11 @@
-import { llmClient } from './utils/llmClient';
+import { executeBrowserAgent } from './lib/agent';
 import { storageManager } from './utils/storage';
 import type {
   Message,
   APIRequest,
   LLMResponse,
-  MessageType
+  MessageType,
+  APIResponse
 } from './types';
 
 // Handle messages from content script and popup
@@ -22,6 +23,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 });
 
 chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendResponse) => {
+  try { console.log('📨 Background received message', { type: message.type }); } catch {}
   try {
     switch (message.type) {
       case 'OPEN_OPTIONS':
@@ -67,13 +69,31 @@ chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendRespo
           sendResponse({ success: false, error: 'No LLM provider configured or enabled' });
           break;
         }
-        const apiResponse = await llmClient.makeRequest(apiRequest);
+        let finalPrompt = apiRequest.prompt.replace('{{selectedText}}', apiRequest.selectedText);
+        if (apiRequest.dropdownVars && typeof apiRequest.dropdownVars === 'object') {
+          for (const [name, payload] of Object.entries(apiRequest.dropdownVars)) {
+            const label = payload?.label || '';
+            const desc = payload?.description || '';
+            finalPrompt = finalPrompt.split(`{{${name}}}`).join(`${label}${desc ? `(${desc})` : ''}`);
+          }
+        }
+        console.log('🧪 Agent request', { prompt: finalPrompt, provider: apiRequest.provider, dropdownVars: apiRequest.dropdownVars });
+        const agentResult = await executeBrowserAgent(finalPrompt, apiRequest.provider, { debug: true });
+        const text = typeof (agentResult as any).data === 'string'
+          ? (agentResult as any).data
+          : ((agentResult as any).data && typeof (agentResult as any).data === 'object' && 'text' in (agentResult as any).data
+            ? (agentResult as any).data.text
+            : String((agentResult as any).data ?? ''));
+        const apiResponse: APIResponse = agentResult.status === 'ok'
+          ? { success: true, data: text }
+          : { success: false, error: 'Agent execution failed' };
+        console.log('🧪 Agent result', { status: agentResult.status, steps: agentResult.steps?.length, model: agentResult.model, text });
 
         // Save to history if successful
-        if (apiResponse.success && apiResponse.data && apiRequest.provider) {
+        if (apiResponse.success && apiRequest.provider) {
           const llmResponse: LLMResponse = {
             id: `response-${Date.now()}`,
-            content: apiResponse.data,
+            content: text,
             provider: apiRequest.provider.name,
             model: apiRequest.provider.model,
             prompt: apiRequest.prompt.replace('{{selectedText}}', apiRequest.selectedText),
@@ -84,6 +104,11 @@ chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendRespo
         }
 
         sendResponse(apiResponse);
+        break;
+
+      case 'PING':
+        console.log('📡 PING received from content');
+        sendResponse({ success: true, data: 'pong' });
         break;
 
       default:
@@ -139,6 +164,22 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       // Ignore errors for tabs that don't have content script
     }
   }
+});
+
+chrome.runtime.onConnect.addListener((port) => {
+  try {
+    if (port.name === 'agent-bar-keeper') {
+      console.log('📡 Port connected');
+      port.onMessage.addListener((msg) => {
+        if (msg && msg.type === 'KEEP_ALIVE') {
+          try { port.postMessage({ type: 'KEEP_ALIVE_ACK', ts: Date.now() }); } catch {}
+        }
+      });
+      port.onDisconnect.addListener(() => {
+        console.log('📡 Port disconnected');
+      });
+    }
+  } catch {}
 });
 
 export {};

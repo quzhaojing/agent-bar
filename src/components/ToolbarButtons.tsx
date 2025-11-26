@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import type { ToolbarButton, ToolbarButtonConfig, DropdownConfig } from '../types';
 import TagPanel from './TagPanel';
 
@@ -11,7 +11,6 @@ interface ToolbarButtonsProps {
 }
 
 const hasEnabledDropdowns = (button: any): boolean => {
-    console.log("=====button:", button);
     return 'dropdowns' in button &&
         Array.isArray(button.dropdowns) &&
         button.dropdowns.some((dropdown: any) => dropdown.enabled);
@@ -19,7 +18,7 @@ const hasEnabledDropdowns = (button: any): boolean => {
 
 const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onButtonClick, extraLeftControls, extraRightControls }) => {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-    console.log("ToolbarButtons rendering. Buttons count:", buttons.length);
+    const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
     return (
         <div className="toolbar-buttons">
             {extraLeftControls}
@@ -34,7 +33,9 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                     <div
                         key={`${'toolbarId' in button ? button.toolbarId : 'legacy'}-${button.id}`}
                         style={{ position: 'relative', display: 'inline-block' }}
-                        onMouseEnter={() => setHoveredIndex(index)}
+                        onMouseEnter={() => {
+                            setHoveredIndex(index)
+                        }}
                         onMouseLeave={() => setHoveredIndex((prev) => (prev === index ? null : prev))}
                     >
                         <button
@@ -46,6 +47,7 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                             style={{
                                 animationDelay: `${index * 50}ms`,
                             }}
+                            ref={(el) => { buttonRefs.current[index] = el }}
                         >
                             {'icon' in button && button.icon && (
                                 <span className="button-icon">{button.icon}</span>
@@ -61,11 +63,17 @@ const ToolbarButtons: React.FC<ToolbarButtonsProps> = ({ buttons, loading, onBut
                                 style={{
                                     position: 'absolute',
                                     bottom: '100%',
-                                    left: 0,
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
                                     zIndex: 9000,
                                 }}
                             >
-                                <TagPanel dropdowns={enabledDropdowns} toolbarId={button.toolbarId} buttonId={button.id} />
+                                <TagPanel
+                                    dropdowns={enabledDropdowns}
+                                    toolbarId={button.toolbarId}
+                                    buttonId={button.id}
+                                    anchorRect={buttonRefs.current[index]?.getBoundingClientRect()}
+                                />
                             </div>
                         )}
                     </div>

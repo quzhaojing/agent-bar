@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
 import TagList from './TagList';
 import type { DropdownConfig } from '../types';
 
@@ -7,9 +7,22 @@ interface TagPanelProps {
   style?: React.CSSProperties;
   toolbarId: string;
   buttonId: string;
+  anchorRect?: DOMRect;
 }
 
-const TagPanel: React.FC<TagPanelProps> = ({ dropdowns, style, toolbarId, buttonId }) => {
+const TagPanel: React.FC<TagPanelProps> = ({ dropdowns, style, toolbarId, buttonId, anchorRect }) => {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [arrowLeft, setArrowLeft] = useState<number | null>(null)
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    if (!panel || !anchorRect) { setArrowLeft(null); return }
+    const pr = panel.getBoundingClientRect()
+    const targetCenter = anchorRect.left + anchorRect.width / 2
+    const left = targetCenter - pr.left
+    const clamped = Math.max(8, Math.min(left, pr.width - 8))
+    setArrowLeft(clamped)
+  }, [anchorRect])
 
   return (
     <div
@@ -27,6 +40,7 @@ const TagPanel: React.FC<TagPanelProps> = ({ dropdowns, style, toolbarId, button
         minWidth: '300px',
         ...style,
       }}
+      ref={panelRef}
     >
       <TagList
         dropdowns={dropdowns}
@@ -38,7 +52,7 @@ const TagPanel: React.FC<TagPanelProps> = ({ dropdowns, style, toolbarId, button
         style={{
           position: 'absolute',
           bottom: '-6px',
-          left: '50%',
+          left: arrowLeft != null ? `${arrowLeft}px` : '50%',
           width: '12px',
           height: '12px',
           background: '#ffffff',

@@ -57,7 +57,7 @@ const ToolbarPanel: React.FC<ToolbarPanelProps> = ({
                 position: 'absolute',
                 left: `${position.x}px`,
                 top: `${position.y}px`,
-                zIndex: 8000,
+                zIndex: 2147483646,
                 pointerEvents: position.visible || resultPanelVisible ? 'auto' : 'none',
             }}
         >
