@@ -29,6 +29,7 @@ const AgentBarApp: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragOffsetRef = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 });
   const toolbarHeightRef = useRef<number>(48);
+  const keepAliveRef = useRef<{ port?: any; timer?: number }>({});
 
   // Initialize
   useEffect(() => {
@@ -54,12 +55,40 @@ const AgentBarApp: React.FC = () => {
         console.log('👂 Event listeners set up');
 
         console.log('✅ Agent Bar initialized successfully');
+
+        try {
+          console.log('📡 Sending PING to background...')
+          const pong = await chrome.runtime.sendMessage({ type: 'PING', payload: { ts: Date.now() } })
+          console.log('📡 PING response:', pong)
+        } catch (e) {
+          console.warn('❌ PING failed:', e)
+        }
+
+        try {
+          if (!keepAliveRef.current.port) {
+            const port = chrome.runtime.connect({ name: 'agent-bar-keeper' });
+            keepAliveRef.current.port = port;
+            keepAliveRef.current.timer = window.setInterval(() => {
+              try { port.postMessage({ type: 'KEEP_ALIVE', ts: Date.now() }); } catch {}
+            }, 20000);
+          }
+        } catch {}
       } catch (error) {
         console.error('❌ Error initializing Agent Bar:', error);
       }
     };
 
     init();
+    return () => {
+      try {
+        if (keepAliveRef.current.timer) {
+          clearInterval(keepAliveRef.current.timer);
+          keepAliveRef.current.timer = undefined;
+        }
+        keepAliveRef.current.port?.disconnect?.();
+        keepAliveRef.current.port = undefined;
+      } catch {}
+    };
   }, []);
 
   // Set up event listeners
@@ -422,10 +451,12 @@ const AgentBarApp: React.FC = () => {
       };
 
       // Send request to background script
+      console.log('🧪 Sending API_REQUEST', apiRequest);
       const response = await chrome.runtime.sendMessage({
         type: 'API_REQUEST',
         payload: apiRequest,
       });
+      console.log('🧪 Received API_RESPONSE', response);
 
       if (response.success && response.data) {
         setResultPanelContent(response.data);

@@ -1,6 +1,4 @@
 import { SystemMessage, HumanMessage, type BaseMessage, isAIMessage } from "@langchain/core/messages"
-import { task, entrypoint } from "@langchain/langgraph"
-import { addMessages } from "@langchain/langgraph"
 import type { LLMProvider } from "~/types"
 import { createChatModel } from "./modelFactory"
 import { browserTools } from "./browserTools"
@@ -13,14 +11,19 @@ function bindTools(model: any) {
   return model.bindTools(tools)
 }
 
-const callLlm = task({ name: "callLlm" }, async (modelWithTools: any, messages: BaseMessage[]) => {
-  return modelWithTools.invoke([new SystemMessage("你是浏览器自动化助手。根据用户目标决定是否调用工具执行页面操作。所有最终回答必须为JSON结构体，包含status、data与steps。"), ...messages])
-})
+async function callLlm(modelWithTools: any, messages: BaseMessage[]) {
+  return modelWithTools.invoke([
+    new SystemMessage(
+      "你是网页智能助手。你可以使用内置浏览器工具执行页面操作；当任务是纯文本处理（如翻译、改写、总结、解释等）时，请不要调用任何工具，直接以纯文本回答。仅在确需页面交互时调用工具。不要使用固定JSON格式输出，保持自然的纯文本回答；如果进行了工具操作，请在最终回答中简要给出结论。"
+    ),
+    ...messages
+  ])
+}
 
-const callTool = task({ name: "callTool" }, async (toolCall: any) => {
+async function callTool(toolCall: any) {
   const t = (browserTools as any)[toolCall.name]
   return t.invoke(toolCall)
-})
+}
 
 export async function executeBrowserAgent(prompt: string, provider: LLMProvider, options?: { debug?: boolean }): Promise<BrowserAgentResult> {
   const dbg = options?.debug ? (...args: any[]) => console.log("[BrowserAgent]", ...args) : (..._args: any[]) => {}
@@ -28,25 +31,23 @@ export async function executeBrowserAgent(prompt: string, provider: LLMProvider,
   const model = createChatModel(provider)
   const modelWithTools = bindTools(model)
   dbg("tools-bound", { count: Object.values(browserTools).length })
-  const agent = entrypoint({ name: "agent" }, async (messages: BaseMessage[]) => {
-    dbg("llm-start", { messages: messages.length })
-    let modelResponse = await callLlm(modelWithTools, messages)
+  let messages: BaseMessage[] = [new HumanMessage(prompt)]
+  dbg("llm-start", { messages: messages.length })
+  let modelResponse = await callLlm(modelWithTools, messages)
+  dbg("llm-response", { hasToolCalls: !!(modelResponse as any).tool_calls, toolCalls: (modelResponse as any).tool_calls?.length || 0 })
+  while (true) {
+    const calls = (modelResponse as any).tool_calls
+    if (!calls || !calls.length) break
+    dbg("tool-calls", calls.map((c: any) => ({ name: c.name, args: c.args })))
+    const toolResults = await Promise.all(calls.map((c: any) => callTool(c)))
+    dbg("tool-results", toolResults)
+    messages.push(modelResponse as any, ...toolResults as any)
+    dbg("messages-updated", { messages: messages.length })
+    modelResponse = await callLlm(modelWithTools, messages)
     dbg("llm-response", { hasToolCalls: !!(modelResponse as any).tool_calls, toolCalls: (modelResponse as any).tool_calls?.length || 0 })
-    while (true) {
-      const calls = (modelResponse as any).tool_calls
-      if (!calls || !calls.length) break
-      dbg("tool-calls", calls.map((c: any) => ({ name: c.name, args: c.args })))
-      const toolResults = await Promise.all(calls.map((c: any) => callTool(c)))
-      dbg("tool-results", toolResults)
-      messages = addMessages(messages, [modelResponse, ...toolResults])
-      dbg("messages-updated", { messages: messages.length })
-      modelResponse = await callLlm(modelWithTools, messages)
-      dbg("llm-response", { hasToolCalls: !!(modelResponse as any).tool_calls, toolCalls: (modelResponse as any).tool_calls?.length || 0 })
-    }
-    dbg("agent-finish")
-    return messages
-  })
-  const result = await agent.invoke([new HumanMessage(prompt)])
+  }
+  dbg("agent-finish")
+  const result = [...messages, modelResponse as any]
   dbg("agent-invoke-done", { messages: result.length })
   const steps: Step[] = []
   for (const m of result) {

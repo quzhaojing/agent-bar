@@ -55,8 +55,8 @@ export const browser_navigate = tool(async ({ url, waitForLoad, timeout }): Prom
   description: "Navigate current tab to a URL and optionally wait for load",
   schema: z.object({
     url: z.string().describe("Target URL"),
-    waitForLoad: z.boolean().optional().default(true),
-    timeout: z.number().optional().default(20000)
+    waitForLoad: z.boolean().nullable().optional().default(true),
+    timeout: z.number().nullable().optional().default(20000)
   })
 })
 
@@ -95,9 +95,9 @@ export const browser_click_element = tool(async ({ selector, waitForElement, dou
   description: "Click a page element by CSS selector",
   schema: z.object({
     selector: z.string().describe("CSS selector"),
-    waitForElement: z.boolean().optional().default(true),
-    doubleClick: z.boolean().optional().default(false),
-    rightClick: z.boolean().optional().default(false)
+    waitForElement: z.boolean().nullable().optional().default(true),
+    doubleClick: z.boolean().nullable().optional().default(false),
+    rightClick: z.boolean().nullable().optional().default(false)
   })
 })
 
@@ -123,8 +123,8 @@ export const browser_type_text = tool(async ({ selector, text, clearFirst, press
   schema: z.object({
     selector: z.string().describe("Input selector"),
     text: z.string().describe("Text to input"),
-    clearFirst: z.boolean().optional().default(true),
-    pressEnter: z.boolean().optional().default(false)
+    clearFirst: z.boolean().nullable().optional().default(true),
+    pressEnter: z.boolean().nullable().optional().default(false)
   })
 })
 
@@ -156,8 +156,8 @@ export const browser_wait_for_element = tool(async ({ selector, state, timeout }
   description: "Wait for element state",
   schema: z.object({
     selector: z.string().describe("Element selector"),
-    state: z.enum(["visible", "hidden", "present", "absent"]).optional().default("visible"),
-    timeout: z.number().optional().default(10000)
+    state: z.enum(["visible", "hidden", "present", "absent"]).nullable().optional().default("visible"),
+    timeout: z.number().nullable().optional().default(10000)
   })
 })
 
@@ -183,10 +183,10 @@ export const browser_scroll_page = tool(async ({ direction, distance, selector, 
   name: "browser_scroll_page",
   description: "Scroll page or to element",
   schema: z.object({
-    direction: z.enum(["up", "down", "left", "right"]).optional().default("down"),
-    distance: z.number().optional().default(400),
-    selector: z.string().optional(),
-    smooth: z.boolean().optional().default(true)
+    direction: z.enum(["up", "down", "left", "right"]).nullable().optional().default("down"),
+    distance: z.number().nullable().optional().default(400),
+    selector: z.string().nullable().optional(),
+    smooth: z.boolean().nullable().optional().default(true)
   })
 })
 
@@ -208,8 +208,8 @@ export const browser_take_screenshot = tool(async ({ area: _area, format }): Pro
   name: "browser_take_screenshot",
   description: "Capture visible tab screenshot",
   schema: z.object({
-    area: z.enum(["viewport", "full", "element"]).optional().default("viewport"),
-    format: z.enum(["png", "jpeg"]).optional().default("png")
+    area: z.enum(["viewport", "full", "element"]).nullable().optional().default("viewport"),
+    format: z.enum(["png", "jpeg"]).nullable().optional().default("png")
   })
 })
 
@@ -234,9 +234,9 @@ export const browser_extract_content = tool(async ({ contentType, selector, stru
   name: "browser_extract_content",
   description: "Extract page content in structured form",
   schema: z.object({
-    contentType: z.enum(["text", "links", "images", "tables", "forms", "all"]).optional().default("all"),
-    selector: z.string().optional(),
-    structured: z.boolean().optional().default(true)
+    contentType: z.enum(["text", "links", "images", "tables", "forms", "all"]).nullable().optional().default("all"),
+    selector: z.string().nullable().optional(),
+    structured: z.boolean().nullable().optional().default(true)
   })
 })
 
@@ -261,7 +261,7 @@ export const browser_select_dropdown = tool(async ({ selector, value, selectBy }
   schema: z.object({
     selector: z.string().describe("Select element selector"),
     value: z.string().describe("Value/text/index"),
-    selectBy: z.enum(["value", "text", "index"]).optional().default("value")
+    selectBy: z.enum(["value", "text", "index"]).nullable().optional().default("value")
   })
 })
 
@@ -278,8 +278,8 @@ export const browser_refresh_page = tool(async ({ force, waitForLoad }): Promise
   name: "browser_refresh_page",
   description: "Refresh the current tab",
   schema: z.object({
-    force: z.boolean().optional().default(false),
-    waitForLoad: z.boolean().optional().default(true)
+    force: z.boolean().nullable().optional().default(false),
+    waitForLoad: z.boolean().nullable().optional().default(true)
   })
 })
 
@@ -308,8 +308,8 @@ export const browser_tab_management = tool(async ({ action, target, url }): Prom
   description: "Manage tabs: new, open, close, switch",
   schema: z.object({
     action: z.enum(["open", "close", "switch", "new"]),
-    target: z.union([z.string(), z.number()]).optional(),
-    url: z.string().optional()
+    target: z.union([z.string(), z.number()]).nullable().optional(),
+    url: z.string().nullable().optional()
   })
 })
 

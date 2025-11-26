@@ -206,7 +206,8 @@ export type MessageType =
   | 'RESULT_PANEL_HIDE'
   | 'API_REQUEST'
   | 'API_RESPONSE'
-  | 'OPEN_OPTIONS';
+  | 'OPEN_OPTIONS'
+  | 'PING';
 
 export interface Message {
   type: MessageType;

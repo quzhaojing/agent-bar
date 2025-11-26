@@ -23,6 +23,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 });
 
 chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendResponse) => {
+  try { console.log('📨 Background received message', { type: message.type }); } catch {}
   try {
     switch (message.type) {
       case 'OPEN_OPTIONS':
@@ -73,8 +74,7 @@ chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendRespo
           for (const [name, payload] of Object.entries(apiRequest.dropdownVars)) {
             const label = payload?.label || '';
             const desc = payload?.description || '';
-            finalPrompt = finalPrompt.split(`{{${name}}}`).join(label);
-            finalPrompt = finalPrompt.split(`{{${name}_description}}`).join(desc);
+            finalPrompt = finalPrompt.split(`{{${name}}}`).join(`${label}${desc ? `(${desc})` : ''}`);
           }
         }
         console.log('🧪 Agent request', { prompt: finalPrompt, provider: apiRequest.provider, dropdownVars: apiRequest.dropdownVars });
@@ -99,6 +99,11 @@ chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendRespo
         }
 
         sendResponse(apiResponse);
+        break;
+
+      case 'PING':
+        console.log('📡 PING received from content');
+        sendResponse({ success: true, data: 'pong' });
         break;
 
       default:
@@ -154,6 +159,22 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       // Ignore errors for tabs that don't have content script
     }
   }
+});
+
+chrome.runtime.onConnect.addListener((port) => {
+  try {
+    if (port.name === 'agent-bar-keeper') {
+      console.log('📡 Port connected');
+      port.onMessage.addListener((msg) => {
+        if (msg && msg.type === 'KEEP_ALIVE') {
+          try { port.postMessage({ type: 'KEEP_ALIVE_ACK', ts: Date.now() }); } catch {}
+        }
+      });
+      port.onDisconnect.addListener(() => {
+        console.log('📡 Port disconnected');
+      });
+    }
+  } catch {}
 });
 
 export {};
