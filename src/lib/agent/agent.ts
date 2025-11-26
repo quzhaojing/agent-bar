@@ -40,7 +40,7 @@ export async function executeBrowserAgent(prompt: string, provider: LLMProvider,
   while (true) {
     const calls = (modelResponse as any).tool_calls
     if (!calls || !calls.length) break
-    if (stepCount >= 6) break
+    if (stepCount >= 20) break
     const sig = JSON.stringify(calls.map((c: any) => ({ n: c.name, a: c.args })))
     if (sig === lastCallSig) break
     dbg("tool-calls", calls.map((c: any) => ({ name: c.name, args: c.args })))
