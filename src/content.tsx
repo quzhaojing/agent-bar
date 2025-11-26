@@ -384,14 +384,41 @@ const AgentBarApp: React.FC = () => {
       }
       setResultPanelShowConfigure(false);
 
-      // Prepare API request
       const prompt = ('promptTemplate' in button ? button.promptTemplate : button.prompt)
         .replace('{{selectedText}}', selectedText);
+
+      let dropdownVars: Record<string, { label: string; description?: string }> | undefined = undefined;
+      if (panelDropdowns && panelToolbarId && panelButtonId) {
+        const host = (typeof window !== 'undefined' && window.location) ? window.location.host : 'unknown-host';
+        const entries = await Promise.all(panelDropdowns.map(async (dd) => {
+          const key = `agent-bar-selection:${host}:${panelToolbarId}:${panelButtonId}:${dd.id}`;
+          const value = await new Promise<any>((resolve) => {
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+              chrome.storage.local.get([key], (result) => resolve(result[key]));
+            } else {
+              resolve(undefined);
+            }
+          });
+          const label: string | undefined = value && typeof value === 'object' ? value.label : undefined;
+          let description: string | undefined = undefined;
+          if (label && Array.isArray(dd.options)) {
+            const opt: any = dd.options.find((o: any) => o && o.label === label);
+            description = opt && typeof opt.description === 'string' ? opt.description : undefined;
+          }
+          return [dd.name, label ? { label, description } : undefined] as const;
+        }));
+        const map: Record<string, { label: string; description?: string }> = {};
+        for (const [name, payload] of entries) {
+          if (name && payload) map[name] = payload;
+        }
+        dropdownVars = Object.keys(map).length ? map : undefined;
+      }
 
       const apiRequest = {
         provider,
         prompt,
         selectedText,
+        dropdownVars,
       };
 
       // Send request to background script

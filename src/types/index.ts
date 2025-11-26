@@ -182,6 +182,7 @@ export interface APIRequest {
   provider: LLMProvider;
   prompt: string;
   selectedText: string;
+  dropdownVars?: Record<string, { label: string; description?: string }>;
 }
 
 export interface APIResponse {
