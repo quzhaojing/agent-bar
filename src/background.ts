@@ -1,10 +1,11 @@
-import { llmClient } from './utils/llmClient';
+import { executeBrowserAgent } from './lib/agent';
 import { storageManager } from './utils/storage';
 import type {
   Message,
   APIRequest,
   LLMResponse,
-  MessageType
+  MessageType,
+  APIResponse
 } from './types';
 
 // Handle messages from content script and popup
@@ -67,7 +68,11 @@ chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendRespo
           sendResponse({ success: false, error: 'No LLM provider configured or enabled' });
           break;
         }
-        const apiResponse = await llmClient.makeRequest(apiRequest);
+        const finalPrompt = apiRequest.prompt.replace('{{selectedText}}', apiRequest.selectedText);
+        const agentResult = await executeBrowserAgent(finalPrompt, apiRequest.provider);
+        const apiResponse: APIResponse = agentResult.status === 'ok'
+          ? { success: true, data: JSON.stringify(agentResult) }
+          : { success: false, error: 'Agent execution failed', data: JSON.stringify(agentResult) };
 
         // Save to history if successful
         if (apiResponse.success && apiResponse.data && apiRequest.provider) {
