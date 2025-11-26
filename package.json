@@ -48,8 +48,7 @@
     ],
     "permissions": [
       "storage",
-      "activeTab",
-      "scripting"
+      "activeTab"
     ],
     "key": "$CRX_KEY",
     "web_accessible_resources": [
