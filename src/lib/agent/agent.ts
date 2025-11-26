@@ -35,14 +35,26 @@ export async function executeBrowserAgent(prompt: string, provider: LLMProvider,
   dbg("llm-start", { messages: messages.length })
   let modelResponse = await callLlm(modelWithTools, messages)
   dbg("llm-response", { hasToolCalls: !!(modelResponse as any).tool_calls, toolCalls: (modelResponse as any).tool_calls?.length || 0 })
+  let stepCount = 0
+  let lastCallSig = ""
   while (true) {
     const calls = (modelResponse as any).tool_calls
     if (!calls || !calls.length) break
+    if (stepCount >= 6) break
+    const sig = JSON.stringify(calls.map((c: any) => ({ n: c.name, a: c.args })))
+    if (sig === lastCallSig) break
     dbg("tool-calls", calls.map((c: any) => ({ name: c.name, args: c.args })))
     const toolResults = await Promise.all(calls.map((c: any) => callTool(c)))
     dbg("tool-results", toolResults)
     messages.push(modelResponse as any, ...toolResults as any)
     dbg("messages-updated", { messages: messages.length })
+    if (messages.length > 40) {
+      const base = messages.slice(0, 2)
+      const tail = messages.slice(-10)
+      messages = [...base, ...tail]
+    }
+    stepCount++
+    lastCallSig = sig
     modelResponse = await callLlm(modelWithTools, messages)
     dbg("llm-response", { hasToolCalls: !!(modelResponse as any).tool_calls, toolCalls: (modelResponse as any).tool_calls?.length || 0 })
   }
