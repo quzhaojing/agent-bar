@@ -35,9 +35,38 @@ async function waitForTabComplete(tabId: number, timeout = 15000): Promise<void>
 
 async function execInTab<T>(func: (...args: any[]) => T, args: any[] = []): Promise<T> {
   const tabId = await getActiveTabId()
-  const results = await chrome.scripting.executeScript({ target: { tabId }, func, args })
-  const r = results?.[0]?.result as T
-  return r
+  // Try MV3 scripting API first
+  try {
+    if ((chrome as any).scripting && (chrome as any).scripting.executeScript) {
+      const results = await (chrome as any).scripting.executeScript({ target: { tabId }, func, args })
+      const r = results?.[0]?.result as T
+      return r
+    }
+  } catch (_err) {
+    // Fallthrough to MV2 tabs.executeScript
+  }
+  // Fallback for MV2 or browsers without scripting permission
+  if ((chrome as any).tabs && (chrome as any).tabs.executeScript) {
+    const code = `(${func.toString()})(...${JSON.stringify(args)})`
+    const results: any[] = await new Promise((resolve, reject) => {
+      ;(chrome as any).tabs.executeScript(tabId, { code }, (res: any) => {
+        const err = (chrome as any).runtime?.lastError
+        if (err) reject(new Error(err.message))
+        else resolve(res)
+      })
+    })
+    const r = results?.[0] as T
+    return r
+  }
+  // Firefox/WebExtension Promise-based API
+  const browserObj: any = (globalThis as any).browser
+  if (browserObj && browserObj.tabs && typeof browserObj.tabs.executeScript === "function") {
+    const code = `(${func.toString()})(...${JSON.stringify(args)})`
+    const results: any[] = await browserObj.tabs.executeScript(tabId, { code })
+    const r = results?.[0] as T
+    return r
+  }
+  throw new Error("executeScript API unavailable")
 }
 
 export const browser_navigate = tool(async ({ url, waitForLoad, timeout }): Promise<ToolResult<{ url: string }>> => {
@@ -313,6 +342,103 @@ export const browser_tab_management = tool(async ({ action, target, url }): Prom
   })
 })
 
+export const browser_get_focused_input = tool(async ({ includeRect }): Promise<ToolResult<{ tag: string; id?: string; name?: string; type?: string; value?: string; placeholder?: string; contenteditable?: boolean; classList?: string[]; selector?: string; rect?: { left: number; top: number; right: number; bottom: number; width: number; height: number } }>> => {
+  try {
+    const res = await execInTab((incRect: boolean) => {
+      const ae = document.activeElement as HTMLElement | null
+      if (!ae) return { ok: false, error: "no active element" }
+      const isInput = ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.getAttribute("contenteditable") === "true"
+      if (!isInput) return { ok: false, error: "no focused input" }
+      const tag = ae.tagName.toLowerCase()
+      const id = ae.id || undefined
+      const name = (ae as any).name || undefined
+      const type = (ae as any).type || undefined
+      const value = (ae as any).value ?? (ae.textContent || undefined)
+      const placeholder = (ae as any).placeholder || undefined
+      const contenteditable = ae.getAttribute("contenteditable") === "true" || undefined
+      const classList = Array.from(ae.classList)
+      const cssEscape = (s: string) => s.replace(/[:\.#\[\],]/g, "\\$&")
+      const selector = id ? `#${cssEscape(id)}` : (() => {
+        let sel = tag
+        if (classList.length) sel += "." + classList.map(cssEscape).join(".")
+        const parent = ae.parentElement
+        if (parent) {
+          const sameTag = Array.from(parent.children).filter(c => c.tagName.toLowerCase() === tag)
+          const idx = sameTag.indexOf(ae)
+          if (idx >= 0) sel += `:nth-of-type(${idx + 1})`
+        }
+        return sel
+      })()
+      const r = incRect ? ae.getBoundingClientRect() : null
+      const rect = r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height } : undefined
+      return { ok: true, result: { tag, id, name, type, value, placeholder, contenteditable, classList, selector, rect } }
+    }, [!!includeRect])
+    return res
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "focused input error" }
+  }
+}, {
+  name: "browser_get_focused_input",
+  description: "Get info of the currently focused input/textarea/contenteditable",
+  schema: z.object({
+    includeRect: z.boolean().nullable().optional().default(true)
+  })
+})
+
+export const browser_get_selected_text = tool(async ({ includeRect }): Promise<ToolResult<{ text: string; rect?: { left: number; top: number; right: number; bottom: number; width: number; height: number }; endRect?: { left: number; top: number; right: number; bottom: number; width: number; height: number } }>> => {
+  try {
+    const res = await execInTab((incRect: boolean) => {
+      const sel = window.getSelection()
+      const ae = document.activeElement as HTMLElement | null
+      const isInput = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA")
+      if (isInput) {
+        const el = ae as HTMLInputElement | HTMLTextAreaElement
+        const start = el.selectionStart ?? 0
+        const end = el.selectionEnd ?? 0
+        if (end > start) {
+          const text = (el.value || "").substring(start, end)
+          if (text && text.trim().length) {
+            const r = incRect ? el.getBoundingClientRect() : null
+            const rect = r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height } : undefined
+            return { ok: true, result: { text, rect, endRect: rect } }
+          }
+        }
+      }
+      if (sel && !sel.isCollapsed) {
+        const text = sel.toString().trim()
+        if (text.length) {
+          if (!incRect) return { ok: true, result: { text } }
+          const range = sel.getRangeAt(0)
+          const rect = range.getBoundingClientRect()
+          const endRange = range.cloneRange()
+          endRange.collapse(false)
+          let endRect = endRange.getBoundingClientRect()
+          const endRects = (endRange as any).getClientRects ? Array.from((endRange as any).getClientRects()) : []
+          if ((!endRect || (endRect.width === 0 && endRect.height === 0)) && endRects.length) {
+            endRect = endRects[endRects.length - 1] as DOMRect
+          }
+          if (!endRect || (endRect.width === 0 && endRect.height === 0)) {
+            endRect = rect
+          }
+          const main = { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }
+          const tail = endRect ? { left: endRect.left, top: endRect.top, right: endRect.right, bottom: endRect.bottom, width: endRect.width, height: endRect.height } : undefined
+          return { ok: true, result: { text, rect: main, endRect: tail } }
+        }
+      }
+      return { ok: false, error: "no selection" }
+    }, [!!includeRect])
+    return res
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "selected text error" }
+  }
+}, {
+  name: "browser_get_selected_text",
+  description: "Get the currently selected text on the page",
+  schema: z.object({
+    includeRect: z.boolean().nullable().optional().default(true)
+  })
+})
+
 export const browserTools = {
   browser_navigate,
   browser_click_element,
@@ -323,7 +449,9 @@ export const browserTools = {
   browser_extract_content,
   browser_select_dropdown,
   browser_refresh_page,
-  browser_tab_management
+  browser_tab_management,
+  browser_get_focused_input,
+  browser_get_selected_text
 }
 
 export type BrowserToolName = keyof typeof browserTools
