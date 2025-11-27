@@ -16,6 +16,7 @@ interface ToolbarButton {
     title: string;
     prompt: string;
     enabled: boolean;
+    triggerCondition?: 'text-selection' | 'input-focus' | 'global-website';
     dropdowns?: Dropdown[];
   }>;
   enabled: boolean;
@@ -149,7 +150,8 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
         title: 'New Button',
         prompt: 'Process this: {{selectedText}}',
         enabled: true,
-        dropdowns: []
+        triggerCondition: 'text-selection' as 'text-selection',
+        dropdowns: [] as Dropdown[]
       }]
     };
     setToolbarForm(newToolbar);
@@ -438,6 +440,14 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
     autoSaveToolbar();
   };
 
+  const updateButtonTriggerCondition = (index: number, value: 'text-selection' | 'input-focus' | 'global-website') => {
+    if (!toolbarForm) return;
+    const newButtons = [...toolbarForm.buttons];
+    newButtons[index].triggerCondition = value;
+    setToolbarForm({ ...toolbarForm, buttons: newButtons });
+    autoSaveToolbar();
+  };
+
   if (isLoading) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -704,32 +714,44 @@ export default function ToolbarDetailPage({ toolbarId }: { toolbarId: string }) 
                     }}
                   />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-                    <input
-                      type="checkbox"
-                      checked={button.enabled}
-                      onChange={(e) => updateButtonEnabled(index, e.target.checked)}
-                      style={{ marginRight: '6px' }}
-                    />
-                    <span style={{ fontSize: '14px', color: '#374151' }}>Enabled</span>
-                  </label>
-                  <button
-                    onClick={() => deleteButton(button.id)}
-                    style={{
-                      padding: '8px 12px',
-                      backgroundColor: 'transparent',
-                      color: '#ef4444',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                    title="Delete button"
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                <label style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                  <input
+                    type="checkbox"
+                    checked={button.enabled}
+                    onChange={(e) => updateButtonEnabled(index, e.target.checked)}
+                    style={{ marginRight: '6px' }}
+                  />
+                  <span style={{ fontSize: '14px', color: '#374151' }}>Enabled</span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px', color: '#374151' }}>Trigger</span>
+                  <select
+                    value={button.triggerCondition || 'text-selection'}
+                    onChange={(e) => updateButtonTriggerCondition(index, e.target.value as any)}
+                    style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
                   >
-                    🗑️
-                  </button>
+                    <option value="text-selection">Text Selection</option>
+                    <option value="input-focus">Input Focus</option>
+                    <option value="global-website">Global Website</option>
+                  </select>
                 </div>
+                <button
+                  onClick={() => deleteButton(button.id)}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: 'transparent',
+                    color: '#ef4444',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                  title="Delete button"
+                >
+                  🗑️
+                </button>
+              </div>
               </div>
               <textarea
                 value={button.prompt}

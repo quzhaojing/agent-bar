@@ -46,6 +46,7 @@ export interface ToolbarButtonConfig {
   prompt: string;
   title: string;
   dropdowns?: DropdownConfig[];
+  triggerCondition?: 'text-selection' | 'input-focus' | 'global-website';
 }
 
 // Website Pattern interface for toolbar URL matching

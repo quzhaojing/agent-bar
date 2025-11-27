@@ -16,6 +16,7 @@ const AgentBarApp: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isPinned, _setIsPinned] = useState(false);
   const [_isDragging, setIsDragging] = useState(false);
+  const [currentTrigger, setCurrentTrigger] = useState<'text-selection' | 'input-focus' | 'global-website' | null>(null);
   
   // Result panel state
   const [resultPanelVisible, setResultPanelVisible] = useState(false);
@@ -51,6 +52,7 @@ const AgentBarApp: React.FC = () => {
         // Set up event listeners
         setupEventListeners();
         await ping();
+        checkGlobalTrigger();
       } catch (error) {
         console.error('❌ Error initializing Agent Bar:', error);
       }
@@ -109,6 +111,23 @@ const AgentBarApp: React.FC = () => {
       handleTextSelection();
     }, true);
 
+    document.addEventListener('focusin', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.getAttribute('contenteditable') === 'true';
+      if (!isInput) return;
+      const rect = target.getBoundingClientRect();
+      const text = (target as HTMLInputElement).value || target.textContent || '';
+      setCurrentTrigger('input-focus');
+      showToolbar(text, rect as any);
+    }, true);
+
+    document.addEventListener('focusout', (_e) => {
+      if (!isPinned) {
+        hideToolbar();
+      }
+    }, true);
+
 
     // Hide toolbar when clicking outside
     document.addEventListener('click', handleClickOutside);
@@ -119,6 +138,27 @@ const AgentBarApp: React.FC = () => {
     // Watch for URL changes (for SPA)
     watchUrlChanges();
 
+  };
+
+  const checkGlobalTrigger = async () => {
+    try {
+      const freshToolbars = await storageManager.getToolbars();
+      const matchingToolbars = urlMatcher.getToolbarsForUrl(window.location.href, freshToolbars);
+      const hasGlobalButtons = matchingToolbars.some(tb => (tb.buttons || []).some(b => b && b.enabled && (b as any).triggerCondition === 'global-website'));
+      if (hasGlobalButtons) {
+        setCurrentTrigger('global-website');
+        const width = 300;
+        const fakeRect = {
+          left: Math.max(10, (window.innerWidth - width) / 2),
+          top: 100,
+          width,
+          height: 20,
+          right: Math.max(10, (window.innerWidth - width) / 2) + width,
+          bottom: 120,
+        } as unknown as DOMRect;
+        showToolbar('', fakeRect);
+      }
+    } catch {}
   };
 
   // Handle text selection
@@ -181,6 +221,7 @@ const AgentBarApp: React.FC = () => {
       return;
     }
 
+    setCurrentTrigger('text-selection');
     // Place selection marker with debounce
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -357,6 +398,7 @@ const AgentBarApp: React.FC = () => {
         lastUrl = window.location.href;
         setCurrentUrl(window.location.href);
         hideToolbar(); // Hide toolbar on URL change
+        checkGlobalTrigger();
       }
     };
 
@@ -384,7 +426,6 @@ const AgentBarApp: React.FC = () => {
   // Handle button click
   const handleButtonClick = async (button: ToolbarButton | ToolbarButtonConfig) => {
     lastButtonRef.current = button;
-    if (!selectedText) return;
 
     // Don't hide toolbar - keep it visible
     // Show result panel right below toolbar
@@ -617,11 +658,19 @@ const AgentBarApp: React.FC = () => {
       });
     });
 
-    result = allButtons;
+    if (currentTrigger === 'text-selection') {
+      result = allButtons.filter(b => (b as any).triggerCondition === 'text-selection' || (b as any).triggerCondition === 'global-website' || !(b as any).triggerCondition);
+    } else if (currentTrigger === 'input-focus') {
+      result = allButtons.filter(b => (b as any).triggerCondition === 'input-focus' || (b as any).triggerCondition === 'global-website');
+    } else if (currentTrigger === 'global-website') {
+      result = allButtons.filter(b => (b as any).triggerCondition === 'global-website');
+    } else {
+      result = [];
+    }
 
 
     return result;
-  }, [isVisible, currentUrl, toolbars]);
+  }, [isVisible, currentUrl, toolbars, currentTrigger]);
 
 
   if (!isPinned && (!isVisible || displayButtons.length === 0)) {
