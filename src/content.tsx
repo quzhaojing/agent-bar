@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { storageManager } from './utils/storage';
 import { urlMatcher } from './utils/urlMatcher';
 import ToolbarPanel from './components/ToolbarPanel';
+import TriggerMarker from './components/TriggerMarker';
 import type { ToolbarPosition, ToolbarButton, ToolbarConfig, ToolbarButtonConfig, DropdownConfig } from './types';
 import './style.css';
 import { ping, openOptions as openOptionsMsg, getStorage, apiRequest as apiRequestMsg } from './utils/messaging';
@@ -35,6 +36,7 @@ const AgentBarApp: React.FC = () => {
   const lastButtonRef = useRef<ToolbarButton | ToolbarButtonConfig | null>(null);
   const markerRef = useRef<HTMLDivElement | null>(null);
   const lastSelectionRef = useRef<{ text: string; rect: { left: number; top: number; right: number; bottom: number; width: number; height: number } } | null>(null);
+  const [markerState, setMarkerState] = useState<{ visible: boolean; trigger: 'text-selection' | 'input-focus'; rect: { left: number; top: number; right: number; bottom: number; width: number; height: number }; endRect?: { left: number; top: number; right: number; bottom: number; width: number; height: number }; text: string } | null>(null);
 
   // Initialize
   useEffect(() => {
@@ -119,12 +121,13 @@ const AgentBarApp: React.FC = () => {
       const rect = target.getBoundingClientRect();
       const text = (target as HTMLInputElement).value || target.textContent || '';
       setCurrentTrigger('input-focus');
-      showToolbar(text, rect as any);
+      placeInputMarker(text, rect as any);
     }, true);
 
     document.addEventListener('focusout', (_e) => {
       if (!isPinned) {
         hideToolbar();
+        removeSelectionMarker();
       }
     }, true);
 
@@ -204,7 +207,6 @@ const AgentBarApp: React.FC = () => {
 
     let hasMatchingItems = false;
 
-
     // Always get fresh toolbars data to avoid async state issues
     const freshToolbars = await storageManager.getToolbars();
 
@@ -218,7 +220,7 @@ const AgentBarApp: React.FC = () => {
 
     if (!hasMatchingItems) {
       hideToolbar();
-      return;
+      // Continue to show marker even if no matching toolbar
     }
 
     setCurrentTrigger('text-selection');
@@ -237,51 +239,26 @@ const AgentBarApp: React.FC = () => {
       text,
       rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }
     };
-    const margin = 6;
-    const size = 18;
-    const vpRight = window.innerWidth;
-    const vpBottom = window.innerHeight;
-    const centerY = rect.top + rect.height / 2;
-    const upper = centerY < vpBottom / 2;
-    let left: number;
-    let top: number;
-    if (upper) {
-      const r = endRect || rect;
-      left = r.right + margin;
-      top = r.bottom - size / 2;
-    } else {
-      left = rect.right + margin;
-      top = rect.top - size / 2;
-    }
-    if (left + size + margin > vpRight) left = rect.left - size - margin;
-    if (left < margin) left = margin;
-    if (top + size + margin > vpBottom) top = vpBottom - size - margin;
-    if (top < margin) top = margin;
+    setMarkerState({
+      visible: true,
+      trigger: 'text-selection',
+      rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
+      endRect: endRect ? { left: endRect.left, top: endRect.top, right: endRect.right, bottom: endRect.bottom, width: endRect.width, height: endRect.height } : undefined,
+      text
+    });
+  };
 
-    if (!markerRef.current) {
-      const m = document.createElement('div');
-      m.className = 'agent-bar-selection-marker';
-      m.style.cssText = `position:fixed; width:${size}px; height:${size}px; border-radius:50%; background:#2563eb; box-shadow:0 2px 6px rgba(0,0,0,0.2); border:2px solid #fff; z-index:2147483646; cursor:pointer; pointer-events:auto;`;
-      m.addEventListener('mouseenter', () => {
-        const sel = lastSelectionRef.current;
-        if (!sel) return;
-        const mr = m.getBoundingClientRect();
-        const fakeRect = {
-          left: mr.left,
-          top: mr.top,
-          right: mr.right,
-          bottom: mr.bottom,
-          width: mr.width,
-          height: mr.height
-        } as DOMRect as any;
-        showToolbar(sel.text, fakeRect);
-      });
-      markerRef.current = m;
-      document.body.appendChild(m);
-    }
-
-    markerRef.current.style.left = `${left}px`;
-    markerRef.current.style.top = `${top}px`;
+  const placeInputMarker = (text: string, rect: DOMRect) => {
+    lastSelectionRef.current = {
+      text,
+      rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }
+    };
+    setMarkerState({
+      visible: true,
+      trigger: 'input-focus',
+      rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
+      text
+    });
   };
 
   const removeSelectionMarker = () => {
@@ -291,6 +268,7 @@ const AgentBarApp: React.FC = () => {
     }
     markerRef.current = null;
     lastSelectionRef.current = null;
+    setMarkerState(null);
   };
 
   // Show toolbar
@@ -370,22 +348,32 @@ const AgentBarApp: React.FC = () => {
       handleResultPanelClose();
     }
     try {
-      const selection = window.getSelection();
-      if (!selection || selection.isCollapsed) return;
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      const endRange = range.cloneRange();
-      endRange.collapse(false);
-      let endRect = endRange.getBoundingClientRect();
-      const endRects = (endRange as any).getClientRects ? Array.from((endRange as any).getClientRects()) : [];
-      if ((!endRect || (endRect.width === 0 && endRect.height === 0)) && endRects.length) {
-        endRect = endRects[endRects.length - 1] as DOMRect;
+      if (currentTrigger === 'text-selection') {
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed) return;
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        const endRange = range.cloneRange();
+        endRange.collapse(false);
+        let endRect = endRange.getBoundingClientRect();
+        const endRects = (endRange as any).getClientRects ? Array.from((endRange as any).getClientRects()) : [];
+        if ((!endRect || (endRect.width === 0 && endRect.height === 0)) && endRects.length) {
+          endRect = endRects[endRects.length - 1] as DOMRect;
+        }
+        if (!endRect || (endRect.width === 0 && endRect.height === 0)) {
+          endRect = rect;
+        }
+        const txt = lastSelectionRef.current?.text || selection.toString().trim();
+        if (txt) placeSelectionMarker(txt, rect, endRect);
+      } else if (currentTrigger === 'input-focus') {
+        const ae = document.activeElement as HTMLElement | null;
+        if (!ae) return;
+        const isInput = ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.getAttribute('contenteditable') === 'true';
+        if (!isInput) return;
+        const rect = ae.getBoundingClientRect();
+        const text = (ae as HTMLInputElement).value || ae.textContent || '';
+        placeInputMarker(text, rect as any);
       }
-      if (!endRect || (endRect.width === 0 && endRect.height === 0)) {
-        endRect = rect;
-      }
-      const txt = lastSelectionRef.current?.text || selection.toString().trim();
-      if (txt) placeSelectionMarker(txt, rect, endRect);
     } catch {}
   };
 
@@ -673,14 +661,27 @@ const AgentBarApp: React.FC = () => {
   }, [isVisible, currentUrl, toolbars, currentTrigger]);
 
 
-  if (!isPinned && (!isVisible || displayButtons.length === 0)) {
-    return null;
-  }
+  // Render marker regardless; render toolbar only when visible or pinned
 
 
   const panelPosition: ToolbarPosition = { ...position, visible: position.visible || isPinned };
 
   return (
+    <>
+    {markerState && markerState.visible && (
+      <TriggerMarker
+        visible={true}
+        trigger={markerState.trigger}
+        rect={markerState.rect}
+        endRect={markerState.endRect}
+        text={markerState.text}
+        onHover={(anchorRect) => {
+          setCurrentTrigger(markerState.trigger);
+          showToolbar(markerState.text, anchorRect);
+        }}
+        onMount={(el) => { markerRef.current = el; }}
+      />
+    )}
     <ToolbarPanel
       containerRef={containerRef}
       position={panelPosition}
@@ -700,6 +701,7 @@ const AgentBarApp: React.FC = () => {
       panelToolbarId={panelToolbarId}
       panelButtonId={panelButtonId}
     />
+    </>
   );
 };
 
