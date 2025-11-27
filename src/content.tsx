@@ -151,6 +151,16 @@ const AgentBarApp: React.FC = () => {
 
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
+    const endRange = range.cloneRange();
+    endRange.collapse(false);
+    let endRect = endRange.getBoundingClientRect();
+    const endRects = (endRange as any).getClientRects ? Array.from((endRange as any).getClientRects()) : [];
+    if ((!endRect || (endRect.width === 0 && endRect.height === 0)) && endRects.length) {
+      endRect = endRects[endRects.length - 1] as DOMRect;
+    }
+    if (!endRect || (endRect.width === 0 && endRect.height === 0)) {
+      endRect = rect;
+    }
 
     let hasMatchingItems = false;
 
@@ -177,11 +187,11 @@ const AgentBarApp: React.FC = () => {
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      placeSelectionMarker(selectedText, rect);
+      placeSelectionMarker(selectedText, rect, endRect);
     }, 300);
   };
 
-  const placeSelectionMarker = (text: string, rect: DOMRect) => {
+  const placeSelectionMarker = (text: string, rect: DOMRect, endRect?: DOMRect) => {
     lastSelectionRef.current = {
       text,
       rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }
@@ -190,9 +200,20 @@ const AgentBarApp: React.FC = () => {
     const size = 18;
     const vpRight = window.innerWidth;
     const vpBottom = window.innerHeight;
-    let left = rect.right + margin;
-    let top = rect.bottom - size / 2;
+    const centerY = rect.top + rect.height / 2;
+    const upper = centerY < vpBottom / 2;
+    let left: number;
+    let top: number;
+    if (upper) {
+      const r = endRect || rect;
+      left = r.right + margin;
+      top = r.bottom - size / 2;
+    } else {
+      left = rect.right + margin;
+      top = rect.top - size / 2;
+    }
     if (left + size + margin > vpRight) left = rect.left - size - margin;
+    if (left < margin) left = margin;
     if (top + size + margin > vpBottom) top = vpBottom - size - margin;
     if (top < margin) top = margin;
 
@@ -274,7 +295,6 @@ const AgentBarApp: React.FC = () => {
     setIsVisible(false);
     setPosition(prev => ({ ...prev, visible: false }));
     setSelectedText('');
-    removeSelectionMarker();
   };
 
   // Handle click outside
@@ -308,7 +328,24 @@ const AgentBarApp: React.FC = () => {
     if (resultPanelVisible) {
       handleResultPanelClose();
     }
-    removeSelectionMarker();
+    try {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) return;
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      const endRange = range.cloneRange();
+      endRange.collapse(false);
+      let endRect = endRange.getBoundingClientRect();
+      const endRects = (endRange as any).getClientRects ? Array.from((endRange as any).getClientRects()) : [];
+      if ((!endRect || (endRect.width === 0 && endRect.height === 0)) && endRects.length) {
+        endRect = endRects[endRects.length - 1] as DOMRect;
+      }
+      if (!endRect || (endRect.width === 0 && endRect.height === 0)) {
+        endRect = rect;
+      }
+      const txt = lastSelectionRef.current?.text || selection.toString().trim();
+      if (txt) placeSelectionMarker(txt, rect, endRect);
+    } catch {}
   };
 
   // Watch for URL changes (SPA navigation)
