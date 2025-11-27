@@ -19,7 +19,8 @@
       "Bash(powershell:*)",
       "Bash(node generate-crx.js:*)",
       "Bash(node:*)",
-      "Bash(pnpm add:*)"
+      "Bash(pnpm add:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

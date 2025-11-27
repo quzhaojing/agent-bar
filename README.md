@@ -91,6 +91,54 @@ A smart browser extension that provides AI-powered text processing and enhanceme
 }
 ```
 
+## 🤖 Agent Automation
+
+- Built-in Agent plans and executes Browser Tools from natural language, connecting page actions with LLM outputs.
+- Typical invocation at `src/background.ts:81` using `executeBrowserAgent` to run the planned tasks and return structured results.
+
+```ts
+import { executeBrowserAgent } from "~/lib/agent"
+import type { LLMProvider } from "~/types"
+
+const provider: LLMProvider = {
+  id: "p-openai",
+  name: "OpenAI",
+  type: "openai",
+  apiKey: "YOUR_OPENAI_API_KEY",
+  model: "gpt-4o-mini",
+  enabled: true
+}
+
+const prompt = "Open https://example.com and extract page titles and links"
+const result = await executeBrowserAgent(prompt, provider, { debug: true })
+
+console.log(result.status)
+console.log(result.model)
+console.log(result.steps)
+console.log(result.data)
+```
+
+## 🧭 Browser Tools
+
+- Browser Tools perform actions and collect data on the page; see definitions at `src/lib/agent/browserTools.ts:359`.
+- Available tools (selection):
+  - `browser_navigate`: Navigate to a URL and optionally wait for load
+  - `browser_click_element`: Click element (supports double/right click)
+  - `browser_type_text`: Type text into an input
+  - `browser_wait_for_element`: Wait for element state (visible/hidden/present/absent)
+  - `browser_scroll_page`: Scroll page or element
+  - `browser_take_screenshot`: Capture visible tab screenshot
+  - `browser_extract_content`: Extract text/links/images/tables/forms
+  - `browser_select_dropdown`: Select dropdown option
+  - `browser_refresh_page`: Refresh page
+  - `browser_tab_management`: Manage tabs (new/switch/close/open)
+  - `browser_get_focused_input`: Get currently focused input info
+  - `browser_get_selected_text`: Get selected text and selection rectangles
+
+### Compatibility Notes
+- Chrome MV3 requires `scripting` permission to use `chrome.scripting.executeScript`.
+- In MV2/Firefox, it automatically falls back to `tabs.executeScript`/`browser.tabs.executeScript` for script injection.
+
 ## 🛠️ Development
 
 Built with the [Plasmo Framework](https://plasmo.com/) for modern browser extension development.
