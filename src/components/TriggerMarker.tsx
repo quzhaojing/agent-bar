@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-type Trigger = 'text-selection' | 'input-focus';
+type Trigger = 'text-selection' | 'input-focus' | 'global-website';
 
 interface RectLike {
   left: number;
@@ -47,7 +47,11 @@ const TriggerMarker: React.FC<TriggerMarkerProps> = ({ visible, trigger, rect, e
   let left: number;
   let top: number;
 
-  if (trigger === 'text-selection') {
+  if (trigger === 'global-website') {
+    const gap = 24;
+    left = vpRight - size - gap;
+    top = Math.max(margin, Math.min(vpBottom - size - margin, Math.floor(vpBottom / 2 - size / 2)));
+  } else if (trigger === 'text-selection') {
     const r = upper ? (endRect || rect) : rect;
     if (upper) {
       left = r.right + margin;

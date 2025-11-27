@@ -36,7 +36,7 @@ const AgentBarApp: React.FC = () => {
   const lastButtonRef = useRef<ToolbarButton | ToolbarButtonConfig | null>(null);
   const markerRef = useRef<HTMLDivElement | null>(null);
   const lastSelectionRef = useRef<{ text: string; rect: { left: number; top: number; right: number; bottom: number; width: number; height: number } } | null>(null);
-  const [markerState, setMarkerState] = useState<{ visible: boolean; trigger: 'text-selection' | 'input-focus'; rect: { left: number; top: number; right: number; bottom: number; width: number; height: number }; endRect?: { left: number; top: number; right: number; bottom: number; width: number; height: number }; text: string } | null>(null);
+  const [markerState, setMarkerState] = useState<{ visible: boolean; trigger: 'text-selection' | 'input-focus' | 'global-website'; rect: { left: number; top: number; right: number; bottom: number; width: number; height: number }; endRect?: { left: number; top: number; right: number; bottom: number; width: number; height: number }; text: string } | null>(null);
 
   // Initialize
   useEffect(() => {
@@ -179,21 +179,28 @@ const AgentBarApp: React.FC = () => {
     try {
       const freshToolbars = await storageManager.getToolbars();
       const matchingToolbars = urlMatcher.getToolbarsForUrl(window.location.href, freshToolbars);
-      const hasGlobalButtons = matchingToolbars.some(tb => (tb.buttons || []).some(b => b && b.enabled && (b as any).triggerCondition === 'global-website'));
-      if (hasGlobalButtons) {
-        setCurrentTrigger('global-website');
-        const width = 300;
-        const fakeRect = {
-          left: Math.max(10, (window.innerWidth - width) / 2),
-          top: 100,
-          width,
-          height: 20,
-          right: Math.max(10, (window.innerWidth - width) / 2) + width,
-          bottom: 120,
-        } as unknown as DOMRect;
-        showToolbar('', fakeRect);
+      const hasMatchingRules = matchingToolbars.length > 0;
+      if (hasMatchingRules) {
+        placeGlobalMarker();
       }
     } catch {}
+  };
+
+  const placeGlobalMarker = () => {
+    const margin = 10;
+    const width = 20;
+    const height = 20;
+    const left = Math.max(margin, window.innerWidth - width - margin);
+    const top = margin;
+    const rect = {
+      left,
+      top,
+      width,
+      height,
+      right: left + width,
+      bottom: top + height,
+    };
+    setMarkerState({ visible: true, trigger: 'global-website', rect, text: '' });
   };
 
   // Handle text selection
@@ -233,6 +240,7 @@ const AgentBarApp: React.FC = () => {
         hideToolbar();
       }
       removeSelectionMarker();
+      checkGlobalTrigger();
       return;
     }
 
@@ -246,6 +254,7 @@ const AgentBarApp: React.FC = () => {
 
       hideToolbar();
       removeSelectionMarker();
+      checkGlobalTrigger();
       return;
     }
 
