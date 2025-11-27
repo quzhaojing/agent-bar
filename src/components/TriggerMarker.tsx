@@ -33,10 +33,10 @@ const TriggerMarker: React.FC<TriggerMarkerProps> = ({ visible, trigger, rect, e
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
         chrome.storage.local.set({ 'agent-bar-marker-trigger': trigger });
       }
-    } catch {}
+    } catch { }
   }, [trigger]);
 
-  if (!visible) return null;
+  if (!visible || !rect) return null;
 
   const margin = 6;
   const size = 18;

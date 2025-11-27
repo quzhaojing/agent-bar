@@ -118,17 +118,49 @@ const AgentBarApp: React.FC = () => {
       if (!target) return;
       const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.getAttribute('contenteditable') === 'true';
       if (!isInput) return;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = undefined;
+      }
       const rect = target.getBoundingClientRect();
       const text = (target as HTMLInputElement).value || target.textContent || '';
       setCurrentTrigger('input-focus');
       placeInputMarker(text, rect as any);
     }, true);
 
-    document.addEventListener('focusout', (_e) => {
-      if (!isPinned) {
-        hideToolbar();
-        removeSelectionMarker();
+    document.addEventListener('focusout', (e) => {
+      // Don't hide if focus is moving to the marker, toolbar, or result panel
+      const relatedTarget = e.relatedTarget as Node;
+      if (relatedTarget) {
+        const targetElement = relatedTarget as Element;
+        const isInsideToolbar = containerRef.current && containerRef.current.contains(relatedTarget);
+        const isInsideResultPanel = targetElement.closest && targetElement.closest('.agent-bar-result-panel');
+        const isInsideMarker = markerRef.current && markerRef.current.contains(relatedTarget);
+
+        if (isInsideToolbar || isInsideResultPanel || isInsideMarker) {
+          return;
+        }
       }
+
+      // Add a small delay to prevent flickering when user clicks the marker
+      setTimeout(() => {
+        // Check if marker is still in an input-focus state before hiding
+        if (currentTrigger === 'input-focus' && !isPinned) {
+          // Check if current active element is still an input
+          const activeElement = document.activeElement as HTMLElement;
+          const isStillInput = activeElement && (
+            activeElement.tagName === 'INPUT' ||
+            activeElement.tagName === 'TEXTAREA' ||
+            activeElement.getAttribute('contenteditable') === 'true'
+          );
+
+          // Only hide if no longer focused on an input
+          if (!isStillInput) {
+            hideToolbar();
+            removeSelectionMarker();
+          }
+        }
+      }, 120); // Small delay to allow marker interactions
     }, true);
 
 
@@ -169,11 +201,31 @@ const AgentBarApp: React.FC = () => {
     const selection = window.getSelection();
 
     if (!selection || selection.isCollapsed) {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = undefined;
+      }
       // Don't hide if user is interacting with the toolbar/panel
       const isHoveringToolbar = containerRef.current?.matches(':hover');
       const isHoveringPanel = document.querySelector('.agent-bar-result-panel:hover');
 
       if (isHoveringToolbar || isHoveringPanel) {
+        return;
+      }
+
+      const ae = document.activeElement as HTMLElement | null;
+      const isStillInput = ae && (
+        ae.tagName === 'INPUT' ||
+        ae.tagName === 'TEXTAREA' ||
+        ae.getAttribute('contenteditable') === 'true'
+      );
+      if (isStillInput) {
+        return;
+      }
+
+      // Don't remove marker if it's currently in input-focus mode
+      // (focus to input fields should not be cleared by text selection changes)
+      if (currentTrigger === 'input-focus') {
         return;
       }
 
@@ -187,6 +239,11 @@ const AgentBarApp: React.FC = () => {
     const selectedText = selection.toString().trim();
 
     if (!selectedText || selectedText.length < 1) {
+      // Don't remove marker if it's currently in input-focus mode
+      if (currentTrigger === 'input-focus') {
+        return;
+      }
+
       hideToolbar();
       removeSelectionMarker();
       return;
@@ -262,10 +319,6 @@ const AgentBarApp: React.FC = () => {
   };
 
   const removeSelectionMarker = () => {
-    const m = markerRef.current;
-    if (m && m.parentNode) {
-      try { m.parentNode.removeChild(m); } catch {}
-    }
     markerRef.current = null;
     lastSelectionRef.current = null;
     setMarkerState(null);
