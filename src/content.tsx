@@ -233,36 +233,26 @@ const AgentBarApp: React.FC = () => {
 
   // Show toolbar
   const showToolbar = (text: string, rect: DOMRect) => {
-
     const margin = 10;
     const toolbarWidth = 300;
     let direction: 'up' | 'down' = 'up';
-    let x = rect.left + rect.width / 2 - toolbarWidth / 2;
-    let y = rect.top - toolbarHeightRef.current;
+    let x = window.scrollX + rect.left + rect.width / 2 - toolbarWidth / 2;
+    let y = window.scrollY + rect.top - toolbarHeightRef.current - margin;
 
-
-    // Clamp within viewport vertically to avoid going off-screen
     const minY = window.scrollY + margin;
     const maxY = window.scrollY + window.innerHeight - toolbarHeightRef.current - margin;
-    if (y < minY) {
-      y = rect.top + margin;
-      direction = 'down';
-    }
+    if (y < minY) y = minY;
     if (y > maxY) y = maxY;
 
-    if (x < window.scrollX + margin) {
-      x = window.scrollX + margin;
-    } else if (x + toolbarWidth > window.scrollX + window.innerWidth - margin) {
-      x = window.scrollX + window.innerWidth - toolbarWidth - margin;
-    }
-
+    const minX = window.scrollX + margin;
+    const maxX = window.scrollX + window.innerWidth - toolbarWidth - margin;
+    if (x < minX) x = minX; else if (x > maxX) x = maxX;
 
     setSelectedText(text);
     setPosition({ x, y, visible: true, direction });
     setIsVisible(true);
     setCurrentUrl(window.location.href);
 
-    // Hide ResultPanel when toolbar is re-shown
     setResultPanelVisible(false);
     setResultPanelContent('');
 
@@ -271,20 +261,11 @@ const AgentBarApp: React.FC = () => {
       if (!container) return;
       const containerRect = container.getBoundingClientRect();
       toolbarHeightRef.current = containerRect.height;
-      const delta = rect.top - containerRect.bottom;
-      if (Math.abs(delta) > 0.5 && direction === 'up') {
-        setPosition(prev => {
-          let newY = prev.y + delta;
-          const minY2 = window.scrollY + margin;
-          const maxY2 = window.scrollY + window.innerHeight - containerRect.height - margin;
-          if (newY < minY2) {
-            newY = rect.top + margin;
-            direction = 'down';
-          }
-          if (newY > maxY2) newY = maxY2;
-          return { ...prev, y: newY, direction };
-        });
-      }
+      const desiredY = window.scrollY + rect.top - containerRect.height - margin;
+      const minY2 = window.scrollY + margin;
+      const maxY2 = window.scrollY + window.innerHeight - containerRect.height - margin;
+      const clampedY = Math.min(Math.max(desiredY, minY2), maxY2);
+      setPosition(prev => ({ ...prev, y: clampedY, direction: 'up' }));
     });
   };
 
