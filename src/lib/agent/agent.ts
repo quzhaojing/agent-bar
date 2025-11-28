@@ -2,12 +2,15 @@ import { SystemMessage, HumanMessage, type BaseMessage, isAIMessage } from "@lan
 import type { LLMProvider } from "~/types"
 import { createChatModel } from "./modelFactory"
 import { browserTools } from "./browserTools"
+import { DuckDuckGoSearch } from "@langchain/community/tools/duckduckgo_search"
 
 type Step = { name: string; input: any; output?: any; error?: string }
 export type BrowserAgentResult = { status: "ok" | "error"; data?: any; steps: Step[]; model: { provider: string; model: string } }
 
+const webSearchTool = new DuckDuckGoSearch({ maxResults: 3 })
+
 function bindTools(model: any) {
-  const tools = Object.values(browserTools)
+  const tools = [...Object.values(browserTools), webSearchTool]
   return model.bindTools(tools)
 }
 
@@ -21,7 +24,9 @@ async function callLlm(modelWithTools: any, messages: BaseMessage[]) {
 }
 
 async function callTool(toolCall: any) {
-  const t = (browserTools as any)[toolCall.name]
+  const toolMap: Record<string, any> = { ...(browserTools as any), [(webSearchTool as any).name]: webSearchTool }
+  const t = toolMap[toolCall.name]
+  if (!t) throw new Error(`Tool not found: ${toolCall.name}`)
   return t.invoke(toolCall)
 }
 

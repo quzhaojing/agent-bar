@@ -36,20 +36,21 @@ async function waitForTabComplete(tabId: number, timeout = 15000): Promise<void>
 async function execInTab<T>(func: (...args: any[]) => T, args: any[] = []): Promise<T> {
   const tabId = await getActiveTabId()
   // Try MV3 scripting API first
-  try {
-    if ((chrome as any).scripting && (chrome as any).scripting.executeScript) {
+  // Try MV3 scripting API first
+  if ((chrome as any).scripting && (chrome as any).scripting.executeScript) {
+    try {
       const results = await (chrome as any).scripting.executeScript({ target: { tabId }, func, args })
       const r = results?.[0]?.result as T
       return r
+    } catch (e: any) {
+      throw new Error(`Script execution failed: ${e.message}`)
     }
-  } catch (_err) {
-    // Fallthrough to MV2 tabs.executeScript
   }
   // Fallback for MV2 or browsers without scripting permission
   if ((chrome as any).tabs && (chrome as any).tabs.executeScript) {
     const code = `(${func.toString()})(...${JSON.stringify(args)})`
     const results: any[] = await new Promise((resolve, reject) => {
-      ;(chrome as any).tabs.executeScript(tabId, { code }, (res: any) => {
+      ; (chrome as any).tabs.executeScript(tabId, { code }, (res: any) => {
         const err = (chrome as any).runtime?.lastError
         if (err) reject(new Error(err.message))
         else resolve(res)
@@ -203,7 +204,7 @@ export const browser_scroll_page = tool(async ({ direction, distance, selector, 
       const dy = dir === "up" ? -dist : dir === "down" ? dist : dist
       window.scrollBy({ left: dx, top: dy, behavior: sm ? "smooth" : "auto" })
       return { ok: true, result: { scrolled: true } }
-    }, [direction ?? "down", distance ?? 400, selector, smooth])
+    }, [direction ?? "down", distance ?? 400, selector ?? null, smooth ?? true])
     return res
   } catch (e: any) {
     return { ok: false, error: e?.message || "scroll error" }
@@ -254,7 +255,7 @@ export const browser_extract_content = tool(async ({ contentType, selector, stru
       const any = () => ({ text: pickText(), links: pickLinks(), images: pickImages(), tables: pickTables(), forms: pickForms() })
       const data = ct === "text" ? pickText() : ct === "links" ? pickLinks() : ct === "images" ? pickImages() : ct === "tables" ? pickTables() : ct === "forms" ? pickForms() : any()
       return st ? { ok: true, result: data } : { ok: true, result: { data } }
-    }, [contentType ?? "all", selector, structured])
+    }, [contentType ?? "all", selector ?? null, structured ?? true])
     return res
   } catch (e: any) {
     return { ok: false, error: e?.message || "extract error" }
