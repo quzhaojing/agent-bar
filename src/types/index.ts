@@ -121,6 +121,7 @@ export interface AgentBarConfig {
     showOnSelect: boolean;
     debounceDelay: number;
     maxHistory: number;
+    serperApiKey?: string;
   };
 }
 

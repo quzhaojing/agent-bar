@@ -15,7 +15,6 @@ const AgentBarApp: React.FC = () => {
   const [currentUrl, setCurrentUrl] = useState<string>('');
   const [toolbars, setToolbars] = useState<ToolbarConfig[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isPinned, _setIsPinned] = useState(false);
   const [_isDragging, setIsDragging] = useState(false);
   const [currentTrigger, setCurrentTrigger] = useState<'text-selection' | 'input-focus' | 'global-website' | null>(null);
   
@@ -145,7 +144,7 @@ const AgentBarApp: React.FC = () => {
       // Add a small delay to prevent flickering when user clicks the marker
       setTimeout(() => {
         // Check if marker is still in an input-focus state before hiding
-        if (currentTrigger === 'input-focus' && !isPinned) {
+        if (currentTrigger === 'input-focus') {
           // Check if current active element is still an input
           const activeElement = document.activeElement as HTMLElement;
           const isStillInput = activeElement && (
@@ -181,6 +180,7 @@ const AgentBarApp: React.FC = () => {
       const matchingToolbars = urlMatcher.getToolbarsForUrl(window.location.href, freshToolbars);
       const hasMatchingRules = matchingToolbars.length > 0;
       if (hasMatchingRules) {
+        console.log(matchingToolbars);
         placeGlobalMarker();
       }
     } catch {}
@@ -236,9 +236,6 @@ const AgentBarApp: React.FC = () => {
         return;
       }
 
-      if (!isPinned) {
-        hideToolbar();
-      }
       removeSelectionMarker();
       checkGlobalTrigger();
       return;
@@ -390,9 +387,6 @@ const AgentBarApp: React.FC = () => {
 
     // Only hide if click is outside both toolbar and result panel
     if (!isInsideToolbar && !isInsideResultPanel && !isInsideMarker) {
-      if (!isPinned) {
-        hideToolbar();
-      }
       // Also hide result panel if it's visible
       if (resultPanelVisible) {
         handleResultPanelClose();
@@ -402,9 +396,6 @@ const AgentBarApp: React.FC = () => {
 
   // Handle scroll
   const handleScroll = () => {
-    if (!isPinned) {
-      hideToolbar();
-    }
     // Also hide result panel on scroll
     if (resultPanelVisible) {
       handleResultPanelClose();
@@ -726,7 +717,7 @@ const AgentBarApp: React.FC = () => {
   // Render marker regardless; render toolbar only when visible or pinned
 
 
-  const panelPosition: ToolbarPosition = { ...position, visible: position.visible || isPinned };
+  const panelPosition: ToolbarPosition = { ...position, visible: position.visible };
 
   return (
     <>

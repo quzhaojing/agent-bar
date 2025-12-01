@@ -211,6 +211,7 @@ class URLMatcher {
       // Check if URL matches any of the toolbar's website patterns
       return toolbar.websitePatterns.some(pattern => {
         if (!pattern.enabled) return false;
+        console.log("===================", toolbar)
         return this.testWebsitePattern(url, pattern.pattern);
       });
     });

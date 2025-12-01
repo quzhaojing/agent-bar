@@ -8,6 +8,7 @@ import icon48 from '../assets/icon48.png';
 // Register routes
 import { router } from './options/router';
 
+
 // Route registration with parameter support
 router.addRoute('/', ToolbarListPage);
 router.addRoute('/provider', LLMProviderPage);
@@ -29,7 +30,7 @@ function OptionsPage() {
           navigate(target);
           await chrome.storage.local.remove(['agent-bar-options-target']);
         }
-      } catch {}
+      } catch { }
     })();
   }, []);
   const CurrentComponent = getCurrentComponent();

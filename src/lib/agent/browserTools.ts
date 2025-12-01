@@ -70,6 +70,34 @@ async function execInTab<T>(func: (...args: any[]) => T, args: any[] = []): Prom
   throw new Error("executeScript API unavailable")
 }
 
+async function execInSpecificTab<T>(tabId: number, func: (...args: any[]) => T, args: any[] = []): Promise<T> {
+  if ((chrome as any).scripting && (chrome as any).scripting.executeScript) {
+    const results = await (chrome as any).scripting.executeScript({ target: { tabId }, func, args })
+    const r = results?.[0]?.result as T
+    return r
+  }
+  if ((chrome as any).tabs && (chrome as any).tabs.executeScript) {
+    const code = `(${func.toString()})(...${JSON.stringify(args)})`
+    const results: any[] = await new Promise((resolve, reject) => {
+      ; (chrome as any).tabs.executeScript(tabId, { code }, (res: any) => {
+        const err = (chrome as any).runtime?.lastError
+        if (err) reject(new Error(err.message))
+        else resolve(res)
+      })
+    })
+    const r = results?.[0] as T
+    return r
+  }
+  const browserObj: any = (globalThis as any).browser
+  if (browserObj && browserObj.tabs && typeof browserObj.tabs.executeScript === "function") {
+    const code = `(${func.toString()})(...${JSON.stringify(args)})`
+    const results: any[] = await browserObj.tabs.executeScript(tabId, { code })
+    const r = results?.[0] as T
+    return r
+  }
+  throw new Error("executeScript API unavailable")
+}
+
 export const browser_navigate = tool(async ({ url, waitForLoad, timeout }): Promise<ToolResult<{ url: string }>> => {
   try {
     const tabId = await getActiveTabId()
@@ -243,30 +271,30 @@ export const browser_take_screenshot = tool(async ({ area: _area, format }): Pro
   })
 })
 
-export const browser_extract_content = tool(async ({ contentType, selector, structured }): Promise<ToolResult<any>> => {
+export const browser_extract_content = tool(async ({ selector }): Promise<ToolResult<{ text: string }>> => {
   try {
-    const res = await execInTab((ct: string, sel?: string, st?: boolean) => {
-      const scope = sel ? document.querySelector(sel) || document : document
-      const pickText = () => (scope as Document | Element).textContent || ""
-      const pickLinks = () => Array.from((scope as Document | Element).querySelectorAll("a")).map(a => ({ text: a.textContent || "", href: a.getAttribute("href") || "" }))
-      const pickImages = () => Array.from((scope as Document | Element).querySelectorAll("img")).map(img => ({ alt: img.alt || "", src: img.src || img.getAttribute("src") || "" }))
-      const pickTables = () => Array.from((scope as Document | Element).querySelectorAll("table")).map(table => Array.from(table.querySelectorAll("tr")).map(tr => Array.from(tr.querySelectorAll("th,td")).map(td => td.textContent || "")))
-      const pickForms = () => Array.from((scope as Document | Element).querySelectorAll("form")).map(form => ({ action: form.getAttribute("action") || "", method: form.getAttribute("method") || "get", inputs: Array.from(form.querySelectorAll("input,textarea,select")).map(el => ({ name: (el.getAttribute("name") || ""), type: (el.tagName.toLowerCase()), value: (el as any).value ?? "" })) }))
-      const any = () => ({ text: pickText(), links: pickLinks(), images: pickImages(), tables: pickTables(), forms: pickForms() })
-      const data = ct === "text" ? pickText() : ct === "links" ? pickLinks() : ct === "images" ? pickImages() : ct === "tables" ? pickTables() : ct === "forms" ? pickForms() : any()
-      return st ? { ok: true, result: data } : { ok: true, result: { data } }
-    }, [contentType ?? "all", selector ?? null, structured ?? true])
+    const res = await execInTab((sel?: string) => {
+      const scope = sel ? (document.querySelector(sel) || document) : document
+      let text = ""
+      if (scope === document) {
+        const body = document.body
+        const root = document.documentElement
+        text = (body && (body.innerText || body.textContent)) || (root && (root.innerText || root.textContent)) || ""
+      } else {
+        const el = scope as HTMLElement
+        text = (el.innerText || el.textContent || "")
+      }
+      return { ok: true, result: { text } }
+    }, [selector ?? null])
     return res
   } catch (e: any) {
     return { ok: false, error: e?.message || "extract error" }
   }
 }, {
   name: "browser_extract_content",
-  description: "Extract page content in structured form",
+  description: "Get page text (optionally within a selector)",
   schema: z.object({
-    contentType: z.enum(["text", "links", "images", "tables", "forms", "all"]).nullable().optional().default("all"),
-    selector: z.string().nullable().optional(),
-    structured: z.boolean().nullable().optional().default(true)
+    selector: z.string().nullable().optional()
   })
 })
 
@@ -310,6 +338,51 @@ export const browser_refresh_page = tool(async ({ force, waitForLoad }): Promise
   schema: z.object({
     force: z.boolean().nullable().optional().default(false),
     waitForLoad: z.boolean().nullable().optional().default(true)
+  })
+})
+
+export const browser_open_search_tab = tool(async ({ engine, query, url, waitForLoad, timeout, closeAfter, returnInfo }): Promise<ToolResult<{ openedUrl: string; tabId: number; title?: string; closed?: boolean }>> => {
+  try {
+    const currentTab = await getActiveTabId()
+    const encode = (s: string) => encodeURIComponent(s)
+    const buildUrl = (): string => {
+      if (url && url.trim()) return url
+      const q = query ? encode(query) : ""
+      const e = (engine || "duckduckgo").toLowerCase()
+      if (e === "google") return `https://www.google.com/search?q=${q}`
+      if (e === "bing") return `https://www.bing.com/search?q=${q}`
+      if (e === "baidu") return `https://www.baidu.com/s?wd=${q}`
+      return `https://duckduckgo.com/?q=${q}`
+    }
+    const targetUrl = buildUrl()
+    const tab = await chrome.tabs.create({ url: targetUrl, active: true })
+    const tabId = tab.id!
+    if (waitForLoad ?? true) await waitForTabComplete(tabId, timeout ?? 20000)
+    let title: string | undefined = undefined
+    if ((returnInfo ?? "title") !== "none") {
+      const res = await execInSpecificTab(tabId, () => ({ title: document.title }))
+      title = (res as any)?.title
+    }
+    if (closeAfter ?? true) {
+      await chrome.tabs.remove(tabId)
+      try { await chrome.tabs.update(currentTab, { active: true }) } catch {}
+      return { ok: true, result: { openedUrl: targetUrl, tabId, title, closed: true } }
+    }
+    return { ok: true, result: { openedUrl: targetUrl, tabId, title, closed: false } }
+  } catch (e: any) {
+    return { ok: false, error: e?.message || "search tab error" }
+  }
+}, {
+  name: "browser_open_search_tab",
+  description: "Open a new tab to search or visit a site, optionally close it",
+  schema: z.object({
+    engine: z.enum(["duckduckgo", "google", "bing", "baidu"]).nullable().optional().default("duckduckgo"),
+    query: z.string().nullable().optional(),
+    url: z.string().nullable().optional(),
+    waitForLoad: z.boolean().nullable().optional().default(true),
+    timeout: z.number().nullable().optional().default(20000),
+    closeAfter: z.boolean().nullable().optional().default(true),
+    returnInfo: z.enum(["title", "url", "none"]).nullable().optional().default("title")
   })
 })
 
@@ -450,6 +523,7 @@ export const browserTools = {
   browser_extract_content,
   browser_select_dropdown,
   browser_refresh_page,
+  browser_open_search_tab,
   browser_tab_management,
   browser_get_focused_input,
   browser_get_selected_text

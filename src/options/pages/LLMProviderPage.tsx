@@ -1,17 +1,7 @@
 import { useState, useEffect } from 'react';
+import { storageManager } from '../../utils/storage';
 
-interface LLMProvider {
-  id: string;
-  name: string;
-  type: 'openai' | 'claude' | 'gemini' | 'deepseek' | 'qwen' | 'glm';
-  apiKey: string;
-  baseUrl?: string;
-  model: string;
-  temperature: number;
-  maxTokens: number;
-  enabled: boolean;
-  isDefault: boolean;
-}
+import { LLMProvider } from '../../types';
 
 const providerModels = {
   openai: [
@@ -84,7 +74,7 @@ export default function LLMProviderPage() {
 
   const [providerForm, setProviderForm] = useState({
     name: '',
-    type: 'openai' as const,
+    type: 'openai' as LLMProvider['type'],
     apiKey: '',
     baseUrl: providerDefaults.openai.baseUrl,
     model: providerDefaults.openai.model,
@@ -100,8 +90,7 @@ export default function LLMProviderPage() {
 
   const loadData = async () => {
     try {
-      const result = await chrome.storage.local.get(['agent-bar-config']);
-      const config = result['agent-bar-config'];
+      const config = await storageManager.getConfig();
 
       if (config?.llmProviders) {
         setProviders(config.llmProviders);
@@ -114,10 +103,10 @@ export default function LLMProviderPage() {
             apiKey: provider.apiKey,
             baseUrl: provider.baseUrl || providerDefaults[provider.type as keyof typeof providerDefaults].baseUrl,
             model: provider.model,
-            temperature: provider.temperature,
-            maxTokens: provider.maxTokens,
+            temperature: provider.temperature ?? 0.7,
+            maxTokens: provider.maxTokens ?? 1000,
             enabled: provider.enabled,
-            isDefault: provider.isDefault,
+            isDefault: provider.isDefault ?? false,
           });
         }
       }
@@ -128,7 +117,7 @@ export default function LLMProviderPage() {
 
   const saveData = async (data: any) => {
     try {
-      await chrome.storage.local.set({ 'agent-bar-config': data });
+      await storageManager.setConfig(data);
       showMessage('Configuration saved successfully', 'success');
     } catch (error) {
       console.error('Error saving data:', error);

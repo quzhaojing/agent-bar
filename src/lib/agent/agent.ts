@@ -2,15 +2,12 @@ import { SystemMessage, HumanMessage, type BaseMessage, isAIMessage } from "@lan
 import type { LLMProvider } from "~/types"
 import { createChatModel } from "./modelFactory"
 import { browserTools } from "./browserTools"
-import { DuckDuckGoSearch } from "@langchain/community/tools/duckduckgo_search"
 
 type Step = { name: string; input: any; output?: any; error?: string }
 export type BrowserAgentResult = { status: "ok" | "error"; data?: any; steps: Step[]; model: { provider: string; model: string } }
 
-const webSearchTool = new DuckDuckGoSearch({ maxResults: 3 })
-
 function bindTools(model: any) {
-  const tools = [...Object.values(browserTools), webSearchTool]
+  const tools = Object.values(browserTools)
   return model.bindTools(tools)
 }
 
@@ -24,14 +21,13 @@ async function callLlm(modelWithTools: any, messages: BaseMessage[]) {
 }
 
 async function callTool(toolCall: any) {
-  const toolMap: Record<string, any> = { ...(browserTools as any), [(webSearchTool as any).name]: webSearchTool }
-  const t = toolMap[toolCall.name]
+  const t = (browserTools as any)[toolCall.name]
   if (!t) throw new Error(`Tool not found: ${toolCall.name}`)
   return t.invoke(toolCall)
 }
 
 export async function executeBrowserAgent(prompt: string, provider: LLMProvider, options?: { debug?: boolean }): Promise<BrowserAgentResult> {
-  const dbg = options?.debug ? (...args: any[]) => console.log("[BrowserAgent]", ...args) : (..._args: any[]) => {}
+  const dbg = options?.debug ? (...args: any[]) => console.log("[BrowserAgent]", ...args) : (..._args: any[]) => { }
   dbg("init", { provider: provider.type, model: provider.model })
   const model = createChatModel(provider)
   const modelWithTools = bindTools(model)

@@ -19,11 +19,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         await chrome.storage.local.set({ 'agent-bar-config': defaultConfig });
       }
     }
-  } catch {}
+  } catch { }
 });
 
 chrome.runtime.onMessage.addListener(async (message: Message, _sender, sendResponse) => {
-  try { console.log('📨 Background received message', { type: message.type }); } catch {}
+  try { console.log('📨 Background received message', { type: message.type }); } catch { }
   try {
     switch (message.type) {
       case 'OPEN_OPTIONS':
@@ -172,14 +172,14 @@ chrome.runtime.onConnect.addListener((port) => {
       console.log('📡 Port connected');
       port.onMessage.addListener((msg) => {
         if (msg && msg.type === 'KEEP_ALIVE') {
-          try { port.postMessage({ type: 'KEEP_ALIVE_ACK', ts: Date.now() }); } catch {}
+          try { port.postMessage({ type: 'KEEP_ALIVE_ACK', ts: Date.now() }); } catch { }
         }
       });
       port.onDisconnect.addListener(() => {
         console.log('📡 Port disconnected');
       });
     }
-  } catch {}
+  } catch { }
 });
 
-export {};
+export { };
