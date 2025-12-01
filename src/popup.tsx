@@ -141,22 +141,15 @@ const Popup = () => {
         )}
 
         {/* Configured Toolbars list */}
-        {config?.toolbarButtons && config.toolbarButtons.length > 0 && (
+        {matchingToolbars.length > 0 && (
           <div style={{ marginTop: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: '16px' }}>Configured Toolbars</h3>
               <button onClick={() => openOptionsRoute('/toolbars')} className="btn btn-secondary">Manage All</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', marginTop: '8px' }}>
-              {config.toolbarButtons.map((tb) => {
-                // Migrate websitePatterns like in options page
-                const websitePatterns: { pattern: string; enabled: boolean }[] = (tb.websitePatterns && Array.isArray(tb.websitePatterns))
-                  ? (typeof tb.websitePatterns[0] === 'string'
-                    ? (tb.websitePatterns as any).map((p: string) => ({ pattern: p, enabled: true }))
-                    : (tb.websitePatterns as any))
-                  : (((tb as any).urlRule) ? [{ pattern: (tb as any).urlRule, enabled: true }] : [{ pattern: '*', enabled: true }]);
-
-                const patternsText = websitePatterns
+              {matchingToolbars.map((tb) => {
+                const patternsText = (tb.websitePatterns || [])
                   .filter((wp: { pattern: string; enabled: boolean }) => wp.enabled)
                   .map((wp: { pattern: string; enabled: boolean }) => wp.pattern)
                   .join(', ');
