@@ -1,4 +1,6 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import TagList from './TagList';
 import type { DropdownConfig } from '../types';
 
@@ -98,6 +100,7 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
     borderRadius: '0 0 8px 8px',
   };
 
+
   return (
     <div
       className="agent-bar-result-panel"
@@ -127,7 +130,19 @@ const ResultPanel: React.FC<ResultPanelProps> = ({
           </div>
         ) : (
           <div className="text-content">
-            {content}
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+                ),
+                img: ({ src, alt }) => (
+                  <img src={src || ''} alt={alt || ''} />
+                )
+              }}
+            >
+              {content}
+            </ReactMarkdown>
           </div>
         )}
       </div>
